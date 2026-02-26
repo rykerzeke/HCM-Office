@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 enum Role {
@@ -159,7 +159,7 @@ model AuditLog {
   caseId    String?
   userId    String?
   action    String
-  details   Json?
+  details   String?
   createdAt DateTime @default(now())
 
   case      Case?    @relation(fields: [caseId], references: [id])

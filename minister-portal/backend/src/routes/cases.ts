@@ -50,8 +50,8 @@ export default async function caseRoutes(fastify: FastifyInstance) {
     let whereClause: any = {};
     if (search) {
       whereClause.OR = [
-        { caseId: { contains: search, mode: 'insensitive' } },
-        { citizen: { name: { contains: search, mode: 'insensitive' } } },
+        { caseId: { contains: search } },
+        { citizen: { name: { contains: search } } },
         { citizen: { phone: { contains: search } } }
       ];
     }

@@ -28,7 +28,7 @@ export default async function referenceRoutes(fastify: FastifyInstance) {
     if (stateId) whereClause.stateId = stateId;
     if (districtId) whereClause.districtId = districtId;
     if (search) {
-      whereClause.name = { contains: search, mode: 'insensitive' };
+      whereClause.name = { contains: search };
     }
 
     const officials = await prisma.official.findMany({

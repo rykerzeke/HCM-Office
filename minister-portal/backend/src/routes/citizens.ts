@@ -54,7 +54,7 @@ export default async function citizenRoutes(fastify: FastifyInstance) {
     if (search) {
       whereClause = {
         OR: [
-          { name: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search } },
           { phone: { contains: search } }
         ]
       };

@@ -3,9 +3,18 @@ import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import dotenv from 'dotenv';
+
 import authRoutes from './routes/auth';
 import citizenRoutes from './routes/citizens';
 import caseRoutes from './routes/cases';
+import stakeholderRoutes from './routes/stakeholders';
+import assignmentRoutes from './routes/assignments';
+import commentRoutes from './routes/comments';
+import fileRoutes from './routes/files';
+import auditRoutes from './routes/audit';
+import dashboardRoutes from './routes/dashboard';
+import referenceRoutes from './routes/reference';
+import reportRoutes from './routes/reports';
 
 dotenv.config();
 
@@ -20,14 +29,20 @@ server.register(fastifyJwt, {
   secret: process.env.JWT_SECRET || 'supersecretkey123',
 });
 
-server.register(multipart, {
-  attachFieldsToBody: true,
-});
+server.register(multipart);
 
 // Routes
 server.register(authRoutes, { prefix: '/api' });
 server.register(citizenRoutes, { prefix: '/api' });
 server.register(caseRoutes, { prefix: '/api' });
+server.register(stakeholderRoutes, { prefix: '/api' });
+server.register(assignmentRoutes, { prefix: '/api' });
+server.register(commentRoutes, { prefix: '/api' });
+server.register(fileRoutes, { prefix: '/api' });
+server.register(auditRoutes, { prefix: '/api' });
+server.register(dashboardRoutes, { prefix: '/api' });
+server.register(referenceRoutes, { prefix: '/api' });
+server.register(reportRoutes, { prefix: '/api' });
 
 // Health Check
 server.get('/health', async () => {
