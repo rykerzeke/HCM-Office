@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  OFFICIAL
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments Assignment[]
+  comments    Comment[]
+  auditLogs   AuditLog[]
+}
+
+model Citizen {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  aadhaar   String?  // encrypted
+  address   String?
+  districtId String?
+  stateId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  district  District? @relation(fields: [districtId], references: [id])
+  state     State?    @relation(fields: [stateId], references: [id])
+  cases     Case[]
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CaseStatus {
+  PENDING
+  IN_PROGRESS
+  ESCALATED
+  COMPLETED
+  RESOLVED
+  ARCHIVED
+}
+
+model Case {
+  id             String    @id @default(uuid())
+  caseId         String    @unique // Sequential MO-2026-00001
+  citizenId      String
+  purpose        String
+  meetingDate    DateTime?
+  status         CaseStatus @default(PENDING)
+  priority       Priority   @default(MEDIUM)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  citizen        Citizen    @relation(fields: [citizenId], references: [id])
+  stakeholders   StakeholderMapping[]
+  assignments    Assignment[]
+  comments       Comment[]
+  files          File[]
+  auditLogs      AuditLog[]
+}
+
+model State {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  districts District[]
+  officials Official[]
+  citizens  Citizen[]
+}
+
+model District {
+  id        String   @id @default(uuid())
+  name      String
+  stateId   String
+  state     State    @relation(fields: [stateId], references: [id])
+  officials Official[]
+  citizens  Citizen[]
+}
+
+model Official {
+  id          String   @id @default(uuid())
+  name        String
+  designation String
+  department  String?
+  contact     String?
+  districtId  String?
+  stateId     String?
+
+  district    District? @relation(fields: [districtId], references: [id])
+  state       State?    @relation(fields: [stateId], references: [id])
+  stakeholders StakeholderMapping[]
+}
+
+model StakeholderMapping {
+  caseId     String
+  officialId String
+
+  case       Case      @relation(fields: [caseId], references: [id])
+  official   Official  @relation(fields: [officialId], references: [id])
+
+  @@id([caseId, officialId])
+}
+
+model Assignment {
+  id        String   @id @default(uuid())
+  caseId    String
+  userId    String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  case      Case     @relation(fields: [caseId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  caseId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  case      Case     @relation(fields: [caseId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model File {
+  id        String   @id @default(uuid())
+  caseId    String
+  filename  String
+  path      String   // Path or URL to file
+  mimetype  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  case      Case     @relation(fields: [caseId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  caseId    String?
+  userId    String?
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  case      Case?    @relation(fields: [caseId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+}
