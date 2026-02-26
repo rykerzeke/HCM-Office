@@ -1,104 +1,111 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
-import { Activity } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Shield, Loader2, ArrowRight } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
+  email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: 'admin@portal.gov', password: 'admin123' }
-  });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      setLoading(true);
       setError('');
       const res = await api.post('/login', data);
       login(res.data.token, res.data.user);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to login');
-    } finally {
-      setLoading(false);
+    } catch {
+      setError('Invalid credentials. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flexjustify-center text-center">
-          <Activity className="mx-auto h-12 w-12 text-primary-600" />
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Minister's Office Portal
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
-          </p>
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background Orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent-cyan/8 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="w-full max-w-md animate-fade-in">
+        {/* Brand */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 glow-primary mb-5">
+            <Shield className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Minister's Office</h1>
+          <p className="mt-2 text-surface-400 text-sm">Citizen Request Management Portal</p>
         </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
-            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-              {error && (
-                <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                  <div className="flex">
-                    <div className="ml-3">
-                      <p className="text-sm text-red-700">{error}</p>
-                    </div>
-                  </div>
-                </div>
+        {/* Card */}
+        <div className="glass rounded-2xl p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {error && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium text-center">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider">Email address</label>
+              <input
+                type="email"
+                {...register('email')}
+                className="input-dark w-full"
+                placeholder="admin@portal.gov"
+              />
+              {errors.email && <p className="text-rose-400 text-xs mt-1">{errors.email.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider">Password</label>
+              <input
+                type="password"
+                {...register('password')}
+                className="input-dark w-full"
+                placeholder="••••••••"
+              />
+              {errors.password && <p className="text-rose-400 text-xs mt-1">{errors.password.message}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="h-4 w-4" />
+                </>
               )}
+            </button>
+          </form>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email address</label>
-                <div className="mt-1">
-                  <input
-                    {...register('email')}
-                    type="email"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  />
-                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <div className="mt-1">
-                  <input
-                    {...register('password')}
-                    type="password"
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  />
-                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
-                </div>
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                >
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-              </div>
-            </form>
+          <div className="mt-6 pt-6 border-t border-white/5 text-center">
+            <p className="text-xs text-surface-500">
+              Demo: <code className="text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">admin@portal.gov</code> / <code className="text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">admin123</code>
+            </p>
           </div>
         </div>
       </div>

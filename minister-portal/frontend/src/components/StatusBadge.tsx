@@ -1,38 +1,38 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+interface BadgeProps {
+  status: string;
 }
 
-export const StatusBadge = ({ status }: { status: string }) => {
-  const colors: Record<string, string> = {
-    PENDING: "bg-yellow-100 text-yellow-800",
-    IN_PROGRESS: "bg-blue-100 text-blue-800",
-    ESCALATED: "bg-red-100 text-red-800",
-    COMPLETED: "bg-green-100 text-green-800",
-    RESOLVED: "bg-gray-100 text-gray-800",
-    ARCHIVED: "bg-gray-100 text-gray-600",
-  };
+const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+  PENDING: { label: 'Pending', bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
+  IN_PROGRESS: { label: 'In Progress', bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400' },
+  ESCALATED: { label: 'Escalated', bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
+  COMPLETED: { label: 'Completed', bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+  RESOLVED: { label: 'Resolved', bg: 'bg-teal-500/10', text: 'text-teal-400', dot: 'bg-teal-400' },
+  ARCHIVED: { label: 'Archived', bg: 'bg-surface-500/10', text: 'text-surface-400', dot: 'bg-surface-400' },
+};
 
+const priorityConfig: Record<string, { label: string; bg: string; text: string }> = {
+  LOW: { label: 'Low', bg: 'bg-surface-500/10', text: 'text-surface-400' },
+  MEDIUM: { label: 'Medium', bg: 'bg-blue-500/10', text: 'text-blue-400' },
+  HIGH: { label: 'High', bg: 'bg-orange-500/10', text: 'text-orange-400' },
+  URGENT: { label: 'Urgent', bg: 'bg-rose-500/10', text: 'text-rose-400' },
+};
+
+export const StatusBadge = ({ status }: BadgeProps) => {
+  const config = statusConfig[status] || { label: status, bg: 'bg-surface-500/10', text: 'text-surface-400', dot: 'bg-surface-400' };
   return (
-    <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium", colors[status] || "bg-gray-100 text-gray-800")}>
-      {status.replace('_', ' ')}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${config.bg} ${config.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot} animate-pulse`} />
+      {config.label}
     </span>
   );
 };
 
 export const PriorityBadge = ({ priority }: { priority: string }) => {
-  const colors: Record<string, string> = {
-    LOW: "bg-gray-100 text-gray-800",
-    MEDIUM: "bg-blue-100 text-blue-800",
-    HIGH: "bg-orange-100 text-orange-800",
-    URGENT: "bg-red-100 text-red-800",
-  };
-
+  const config = priorityConfig[priority] || { label: priority, bg: 'bg-surface-500/10', text: 'text-surface-400' };
   return (
-    <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium", colors[priority] || "bg-gray-100 text-gray-800")}>
-      {priority}
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${config.bg} ${config.text}`}>
+      {config.label}
     </span>
   );
 };

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { StatusBadge } from '../components/StatusBadge';
-import { Activity, Clock, Users, CheckCircle } from 'lucide-react';
+import { Activity, Clock, Users, CheckCircle, TrendingUp, ArrowUpRight } from 'lucide-react';
 
 export const DashboardPage = () => {
   const [stats, setStats] = useState<any>(null);
@@ -14,92 +13,129 @@ export const DashboardPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div>Loading dashboard...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="skeleton h-8 w-48" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
+        </div>
+        <div className="skeleton h-80 rounded-2xl" />
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      label: 'Total Requests',
+      value: stats?.stats?.totalRequests || 0,
+      icon: Activity,
+      gradient: 'from-primary-500/20 to-primary-700/10',
+      iconColor: 'text-primary-400',
+      glowClass: 'glow-primary',
+      borderColor: 'border-primary-500/15',
+    },
+    {
+      label: 'Pending Tasks',
+      value: stats?.stats?.pendingTasks || 0,
+      icon: Clock,
+      gradient: 'from-amber-500/20 to-amber-700/10',
+      iconColor: 'text-amber-400',
+      glowClass: 'glow-amber',
+      borderColor: 'border-amber-500/15',
+    },
+    {
+      label: 'Completed',
+      value: stats?.stats?.completedTasks || 0,
+      icon: CheckCircle,
+      gradient: 'from-emerald-500/20 to-emerald-700/10',
+      iconColor: 'text-emerald-400',
+      glowClass: 'glow-emerald',
+      borderColor: 'border-emerald-500/15',
+    },
+    {
+      label: 'Escalations',
+      value: stats?.stats?.escalations || 0,
+      icon: TrendingUp,
+      gradient: 'from-rose-500/20 to-rose-700/10',
+      iconColor: 'text-rose-400',
+      glowClass: 'glow-rose',
+      borderColor: 'border-rose-500/15',
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full text-blue-600">
-              <Activity className="h-6 w-6" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Requests</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.stats?.totalRequests || 0}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-yellow-100 rounded-full text-yellow-600">
-              <Clock className="h-6 w-6" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pending Tasks</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.stats?.pendingTasks || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-full text-green-600">
-              <CheckCircle className="h-6 w-6" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Completed</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.stats?.completedTasks || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-red-100 rounded-full text-red-600">
-              <Users className="h-6 w-6" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Escalations</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.stats?.escalations || 0}</p>
-            </div>
-          </div>
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-sm text-surface-400 mt-1">Overview of all citizen requests</p>
         </div>
       </div>
 
-      {/* Recent Updates */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {statCards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={i}
+              className={`glass rounded-2xl p-6 ${card.borderColor} hover:scale-[1.02] transition-transform duration-200`}
+            >
+              <div className="flex items-start justify-between">
+                <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
+                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-surface-600" />
+              </div>
+              <div className="mt-4">
+                <p className="text-3xl font-bold text-white">{card.value}</p>
+                <p className="text-sm text-surface-400 mt-1 font-medium">{card.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Recent Activity */}
+      <div className="glass rounded-2xl overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary-400" />
+            <h3 className="text-base font-semibold text-white">Recent Activity</h3>
+          </div>
         </div>
-        <ul className="divide-y divide-gray-200">
+        <div className="divide-y divide-white/5">
           {stats?.recentUpdates?.length === 0 && (
-            <li className="px-6 py-4 text-gray-500 text-sm">No recent activity found.</li>
+            <div className="px-6 py-12 text-center">
+              <Activity className="mx-auto h-10 w-10 text-surface-600 mb-3" />
+              <p className="text-surface-500 text-sm font-medium">No recent activity found</p>
+              <p className="text-surface-600 text-xs mt-1">Activity will appear here as cases are created</p>
+            </div>
           )}
           {stats?.recentUpdates?.map((log: any) => (
-            <li key={log.id} className="px-6 py-4">
-              <div className="flex space-x-3">
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {log.user?.name || 'System'}
-                      <span className="font-normal text-gray-500 mx-2">performed</span>
-                      <span className="font-mono text-xs bg-gray-100 px-1 rounded">{log.action}</span>
-                    </h3>
-                    <p className="text-sm text-gray-500">{new Date(log.createdAt).toLocaleString()}</p>
+            <div key={log.id} className="px-6 py-4 hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-primary-400" />
                   </div>
-                  <p className="text-sm text-gray-500">
-                    Case ID: <span className="font-medium text-gray-900">{log.case?.caseId || 'N/A'}</span>
-                  </p>
+                  <div>
+                    <p className="text-sm text-surface-200">
+                      <span className="font-semibold text-white">{log.user?.name || 'System'}</span>
+                      <span className="mx-1.5 text-surface-600">·</span>
+                      <span className="px-2 py-0.5 rounded-md bg-surface-800/50 text-xs font-mono text-surface-400">{log.action}</span>
+                    </p>
+                    <p className="text-xs text-surface-500 mt-0.5">
+                      Case: <span className="text-primary-400">{log.case?.caseId || 'N/A'}</span>
+                    </p>
+                  </div>
                 </div>
+                <span className="text-xs text-surface-600 whitespace-nowrap">{new Date(log.createdAt).toLocaleString()}</span>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );

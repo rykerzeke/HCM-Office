@@ -15,6 +15,7 @@ import auditRoutes from './routes/audit';
 import dashboardRoutes from './routes/dashboard';
 import referenceRoutes from './routes/reference';
 import reportRoutes from './routes/reports';
+import publicRoutes from './routes/public';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ server.register(auditRoutes, { prefix: '/api' });
 server.register(dashboardRoutes, { prefix: '/api' });
 server.register(referenceRoutes, { prefix: '/api' });
 server.register(reportRoutes, { prefix: '/api' });
+server.register(publicRoutes, { prefix: '/api' });
 
 // Health Check
 server.get('/health', async () => {

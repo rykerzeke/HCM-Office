@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, MapPin, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { Search, Calendar, CheckCircle, Clock, MapPin, User } from 'lucide-react';
 import { StatusBadge } from '../components/StatusBadge';
 import { format } from 'date-fns';
 import api from '../services/api';
@@ -10,26 +10,22 @@ export const TrackCasePage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // We temporarily use an authorized instance but in reality this would be 
-  // a public unauthenticated endpoint. For demonstration we use the existing ones.
-  // The system's rules state we should implement the front-end logic completely.
-  
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery) return;
-    
+
     try {
       setLoading(true);
       setError('');
       setCaseData(null);
-      
-      const res = await api.get(`/cases`, { params: { search: searchQuery } });
+
+      const res = await api.get('/cases', { params: { search: searchQuery } });
       if (res.data.data.length > 0) {
         setCaseData(res.data.data[0]);
       } else {
         setError('No case found with this Case ID or Phone Number.');
       }
-    } catch (err) {
+    } catch {
       setError('Error retrieving case details. Please try again.');
     } finally {
       setLoading(false);
@@ -37,88 +33,84 @@ export const TrackCasePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
+      {/* Background Orbs */}
+      <div className="fixed top-1/3 left-1/3 w-96 h-96 bg-primary-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-1/3 right-1/3 w-80 h-80 bg-accent-cyan/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="w-full max-w-2xl space-y-8 animate-fade-in relative z-10">
         <div className="text-center">
-          <ActivityIcon className="mx-auto h-12 w-12 text-primary-600" />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Track Your Request</h2>
-          <p className="mt-2 text-sm text-gray-600">Enter your generated Case ID (e.g. MO-2026-X) or registered Phone Number</p>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-cyan/20 to-primary-500/20 border border-accent-cyan/20 mb-5">
+            <Search className="h-7 w-7 text-accent-cyan" />
+          </div>
+          <h2 className="text-3xl font-bold text-white">Track Your Request</h2>
+          <p className="mt-2 text-sm text-surface-400">Enter your Case ID or Phone Number</p>
         </div>
 
-        <div className="bg-white shadow rounded-lg px-6 py-8 border border-gray-200">
-          <form onSubmit={handleSearch} className="flex gap-4">
+        <div className="glass rounded-2xl p-6">
+          <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
               <input
                 type="text"
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Case ID or Phone Number"
+                className="input-dark w-full pl-11 py-3"
+                placeholder="MO-2026-XXXXX or Phone Number"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            <button
-              type="submit"
-              disabled={loading || !searchQuery}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading || !searchQuery} className="btn-primary px-8">
               {loading ? 'Searching...' : 'Track'}
             </button>
           </form>
-
-          {error && <p className="mt-4 text-center text-red-600 text-sm">{error}</p>}
+          {error && <p className="mt-4 text-center text-rose-400 text-sm">{error}</p>}
         </div>
 
         {caseData && (
-          <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Case details for {caseData.caseId}</h3>
-                <StatusBadge status={caseData.status} />
+          <div className="glass rounded-2xl overflow-hidden animate-fade-in">
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center glass-accent">
+              <div>
+                <p className="text-xs text-surface-400 font-medium uppercase tracking-wider">Case ID</p>
+                <h3 className="text-lg font-bold font-mono text-primary-400 mt-0.5">{caseData.caseId}</h3>
               </div>
+              <StatusBadge status={caseData.status} />
             </div>
-            <div className="px-6 py-5">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div className="sm:col-span-1">
-                  <dt className="text-sm font-medium text-gray-500 flex items-center"><UserIcon className="h-4 w-4 mr-2" /> Citizen Name</dt>
-                  <dd className="mt-1 text-sm text-gray-900 font-medium">{caseData.citizen?.name}</dd>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="glass-light rounded-xl p-4">
+                  <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><User className="h-3 w-3" /> Citizen</p>
+                  <p className="text-sm text-white font-semibold mt-1">{caseData.citizen?.name}</p>
                 </div>
-                <div className="sm:col-span-1">
-                  <dt className="text-sm font-medium text-gray-500 flex items-center"><Calendar className="h-4 w-4 mr-2" /> Submitted On</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{format(new Date(caseData.createdAt), 'MMMM do, yyyy')}</dd>
+                <div className="glass-light rounded-xl p-4">
+                  <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Submitted</p>
+                  <p className="text-sm text-white font-semibold mt-1">{format(new Date(caseData.createdAt), 'MMMM do, yyyy')}</p>
                 </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-sm font-medium text-gray-500 flex items-center"><MapPin className="h-4 w-4 mr-2" /> Request Purpose</dt>
-                  <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md line-clamp-3">{caseData.purpose}</dd>
-                </div>
-              </dl>
-              
-              <div className="mt-8 border-t border-gray-200 pt-6">
-                <h4 className="text-sm font-medium text-gray-900 mb-4">Latest Status Tracking</h4>
-                
-                <div className="relative pb-8">
-                  <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
-                  <div className="relative flex space-x-3">
-                    <div>
-                      <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${caseData.status === 'COMPLETED' ? 'bg-green-100' : 'bg-blue-100'}`}>
-                        {caseData.status === 'COMPLETED' ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Clock className="h-4 w-4 text-blue-600" />}
-                      </span>
-                    </div>
-                    <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          Current status is <span className="font-medium text-gray-900">{caseData.status}</span>
-                        </p>
-                      </div>
-                      <div className="text-right text-xs whitespace-nowrap text-gray-500">
-                        <time dateTime={caseData.updatedAt}>{format(new Date(caseData.updatedAt), 'PP')}</time>
-                      </div>
-                    </div>
+              </div>
+
+              <div className="glass-light rounded-xl p-4">
+                <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5 mb-2"><MapPin className="h-3 w-3" /> Request Purpose</p>
+                <p className="text-sm text-surface-200 leading-relaxed">{caseData.purpose}</p>
+              </div>
+
+              {/* Status Timeline */}
+              <div className="pt-4 border-t border-white/5">
+                <h4 className="text-xs font-semibold text-surface-400 uppercase tracking-wider mb-4">Status</h4>
+                <div className="relative pl-8">
+                  <span className={`absolute left-0 top-0 w-6 h-6 rounded-full flex items-center justify-center ring-4 ring-surface-900 ${
+                    caseData.status === 'COMPLETED' ? 'bg-emerald-500/20' : 'bg-primary-500/20'
+                  }`}>
+                    {caseData.status === 'COMPLETED'
+                      ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                      : <Clock className="h-3.5 w-3.5 text-primary-400" />
+                    }
+                  </span>
+                  <div>
+                    <p className="text-sm text-surface-300">
+                      Current status: <span className="font-semibold text-white">{caseData.status}</span>
+                    </p>
+                    <p className="text-xs text-surface-500 mt-1">Last updated {format(new Date(caseData.updatedAt), 'PP')}</p>
                   </div>
                 </div>
-                
               </div>
             </div>
           </div>
@@ -127,7 +119,3 @@ export const TrackCasePage = () => {
     </div>
   );
 };
-
-// Extracted icons
-const ActivityIcon = (props:any) => <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
-const UserIcon = (props:any) => <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
