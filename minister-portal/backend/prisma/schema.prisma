@@ -134,6 +134,7 @@ model Assignment {
 model Comment {
   id        String   @id @default(uuid())
   content   String
+  imageUrl  String?
   caseId    String
   userId    String
   createdAt DateTime @default(now())

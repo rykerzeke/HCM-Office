@@ -19,6 +19,7 @@ export default async function commentRoutes(fastify: FastifyInstance) {
       const comment = await prisma.comment.create({
         data: {
           content: data.content,
+          imageUrl: data.imageUrl,
           caseId,
           userId: user.id
         },

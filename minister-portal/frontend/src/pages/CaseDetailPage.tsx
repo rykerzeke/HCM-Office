@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
-import { MessageSquare, Paperclip, Activity, FileText, UserPlus, Send, History, Play, CheckCircle, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Paperclip, Activity, FileText, UserPlus, Send, History, Play, CheckCircle, AlertTriangle, ImageIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const CaseDetailPage = () => {
@@ -14,6 +14,7 @@ export const CaseDetailPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const [commentContent, setCommentContent] = useState('');
+  const [commentImage, setCommentImage] = useState<File | null>(null);
   const [officials, setOfficials] = useState<any[]>([]);
   const [selectedOfficial, setSelectedOfficial] = useState('');
 
@@ -50,10 +51,22 @@ export const CaseDetailPage = () => {
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentContent.trim()) return;
+    if (!commentContent.trim() && !commentImage) return;
     try {
-      await api.post(`/cases/${id}/comments`, { content: commentContent });
+      let imageUrl = null;
+      if (commentImage) {
+        const formData = new FormData();
+        formData.append('files', commentImage);
+        const res = await api.post(`/cases/${id}/files`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (res.data.files && res.data.files.length > 0) {
+          imageUrl = res.data.files[0].path;
+        }
+      }
+      await api.post(`/cases/${id}/comments`, { content: commentContent, imageUrl });
       setCommentContent('');
+      setCommentImage(null);
       fetchCase();
     } catch (err) { console.error(err); }
   };
@@ -277,23 +290,43 @@ export const CaseDetailPage = () => {
                         <span className="text-xs font-semibold text-primary-400">{comment.user.name}</span>
                         <span className="text-[10px] text-surface-600">{format(new Date(comment.createdAt), 'PP p')}</span>
                       </div>
+                      {comment.imageUrl && (
+                        <div className="mb-3">
+                          <img src={`http://localhost:4000${comment.imageUrl}`} alt="Attachment" className="max-w-[16rem] rounded-lg object-cover border border-white/5 shadow-md" />
+                        </div>
+                      )}
                       <p className="text-sm text-surface-200 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <form onSubmit={handleAddComment} className="flex gap-3 pt-4 border-t border-white/5">
-                <textarea
-                  value={commentContent}
-                  onChange={e => setCommentContent(e.target.value)}
-                  placeholder="Add a comment..."
-                  rows={2}
-                  className="input-dark flex-1 resize-none"
-                />
-                <button type="submit" disabled={!commentContent.trim()} className="btn-primary self-end px-5">
-                  <Send className="h-4 w-4" />
-                </button>
-              </form>
+              
+              <div className="pt-4 border-t border-white/5">
+                {commentImage && (
+                  <div className="mb-3 relative inline-block">
+                    <img src={URL.createObjectURL(commentImage)} alt="Preview" className="h-20 rounded-lg object-cover border border-white/10" />
+                    <button type="button" onClick={() => setCommentImage(null)} className="absolute -top-2 -right-2 bg-surface-800 text-white rounded-full p-1 hover:bg-rose-500 hover:text-white transition-colors">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                <form onSubmit={handleAddComment} className="flex gap-3 items-end">
+                  <label className="btn-ghost p-3 cursor-pointer shrink-0 rounded-xl" title="Attach Image">
+                    <ImageIcon className="h-5 w-5 text-surface-400 hover:text-primary-400 transition-colors" />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setCommentImage(e.target.files[0]) }} />
+                  </label>
+                  <textarea
+                    value={commentContent}
+                    onChange={e => setCommentContent(e.target.value)}
+                    placeholder="Add a comment..."
+                    rows={2}
+                    className="input-dark flex-1 resize-none"
+                  />
+                  <button type="submit" disabled={!commentContent.trim() && !commentImage} className="btn-primary self-end px-5 mb-0.5" title="Send Comment">
+                    <Send className="h-4 w-4" />
+                  </button>
+                </form>
+              </div>
             </div>
           )}
 

@@ -51,6 +51,12 @@ server.get('/health', async () => {
   return { status: 'OK' };
 });
 
+import path from 'path';
+server.register(require('@fastify/static'), {
+  root: path.join(__dirname, '../../uploads'),
+  prefix: '/uploads/',
+});
+
 const start = async () => {
   try {
     await server.listen({ port: Number(process.env.PORT) || 4000, host: '0.0.0.0' });

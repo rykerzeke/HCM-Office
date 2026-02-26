@@ -49,7 +49,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Brand */}
         <div className="flex items-center gap-3 px-6 py-6" style={{ borderBottom: '1px solid var(--divider)' }}>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center glow-primary">
-            <Shield className="h-5 w-5 text-white" />
+            <Shield className="h-5 w-5 text-white icon-3d" />
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-wide">MINISTER</h1>
@@ -82,7 +82,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   }
                 `}
               >
-                <Icon className={`h-[18px] w-[18px] transition-colors ${isActive ? 'text-primary-400' : 'text-surface-500 group-hover:text-primary-400'}`} />
+                <Icon className={`h-[18px] w-[18px] transition-colors icon-3d ${isActive ? 'text-primary-400' : 'text-surface-500 group-hover:text-primary-400'}`} />
                 <span>{item.label}</span>
                 {isActive && <ChevronRight className="ml-auto h-4 w-4 text-primary-400/60" />}
               </Link>
@@ -146,7 +146,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-400" />
+            <Shield className="h-5 w-5 text-primary-400 icon-3d" />
             <span className="text-sm font-bold">Minister's Office</span>
           </div>
         </header>

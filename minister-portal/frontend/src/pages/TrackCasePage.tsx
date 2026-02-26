@@ -50,16 +50,16 @@ export const TrackCasePage = () => {
         <div className="glass rounded-2xl p-6">
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
               <input
                 type="text"
-                className="input-dark w-full pl-11 py-3"
+                className="input-dark input-search w-full py-3"
                 placeholder="MO-2026-XXXXX or Phone Number"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            <button type="submit" disabled={loading || !searchQuery} className="btn-primary px-8">
+            <button type="submit" disabled={loading || !searchQuery} className="btn-primary px-8 icon-3d">
               {loading ? 'Searching...' : 'Track'}
             </button>
           </form>

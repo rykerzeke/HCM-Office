@@ -110,14 +110,17 @@ export const NewCasePage = () => {
               <SearchIcon className="h-4 w-4 text-primary-400" /> Search Existing Citizen
             </h3>
             <div className="flex gap-3">
-              <input
-                type="text"
-                className="input-dark flex-1"
-                placeholder="Enter phone number..."
-                value={phoneSearch}
-                onChange={e => setPhoneSearch(e.target.value)}
-              />
-              <button type="button" onClick={handlePhoneSearch} className="btn-ghost">Search</button>
+              <div className="flex-1 relative">
+                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
+                <input
+                  type="text"
+                  className="input-dark input-search w-full"
+                  placeholder="Enter phone number..."
+                  value={phoneSearch}
+                  onChange={e => setPhoneSearch(e.target.value)}
+                />
+              </div>
+              <button type="button" onClick={handlePhoneSearch} className="btn-ghost icon-3d">Search</button>
             </div>
             {searchResults.length > 0 && (
               <div className="mt-4 space-y-2">

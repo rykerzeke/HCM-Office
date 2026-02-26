@@ -84,7 +84,7 @@ export const DashboardPage = () => {
             >
               <div className="flex items-start justify-between">
                 <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
-                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                  <Icon className={`h-5 w-5 icon-3d ${card.iconColor}`} />
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-surface-600" />
               </div>
@@ -101,7 +101,7 @@ export const DashboardPage = () => {
       <div className="glass rounded-2xl overflow-hidden">
         <div className="px-6 py-5 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary-400" />
+            <Activity className="h-4 w-4 text-primary-400 icon-3d" />
             <h3 className="text-base font-semibold text-white">Recent Activity</h3>
           </div>
         </div>

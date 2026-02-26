@@ -49,7 +49,7 @@ export const CaseListPage = () => {
         </div>
         <Link
           to="/cases/new"
-          className="btn-primary inline-flex items-center gap-2 self-start"
+          className="btn-primary inline-flex items-center gap-2 self-start icon-3d"
         >
           <Plus className="h-4 w-4" />
           Create New Case
@@ -60,11 +60,11 @@ export const CaseListPage = () => {
       <div className="glass rounded-2xl p-5">
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
             <input
               type="text"
               placeholder="Search by Case ID, Name, or Phone..."
-              className="input-dark w-full pl-11"
+              className="input-dark input-search w-full"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
