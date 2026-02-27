@@ -1,0 +1,372 @@
+{
+  "cabinet_ministers": [
+    {
+      "name": "Rajnath Singh",
+      "rank": "Cabinet",
+      "ministry": "Defence",
+      "ps": "Amit Kishore",
+      "contact": "8052929887"
+    },
+    {
+      "name": "Amit Shah",
+      "rank": "Cabinet",
+      "ministry": "Home Affairs; Cooperation",
+      "ps": "Saket Kumar",
+      "contact": "9939344444"
+    },
+    {
+      "name": "Nitin Gadkari",
+      "rank": "Cabinet",
+      "ministry": "Road Transport & Highways",
+      "ps": "Deepak Shinde",
+      "contact": "8441509754"
+    },
+    {
+      "name": "J. P. Nadda",
+      "rank": "Cabinet",
+      "ministry": "Health & Family Welfare; Chemicals & Fertilizers",
+      "ps": ["Ashutosh Garg", "Pardeep Srivastava"],
+      "contact": "8894935814"
+    },
+    {
+      "name": "Shivraj Singh Chouhan",
+      "rank": "Cabinet",
+      "ministry": "Agriculture; Rural Development",
+      "ps": ["Ravindra Kumar", "Pravin Singh", "Tilak Raj Arora"],
+      "contact": "9469112000"
+    },
+    {
+      "name": "Nirmala Sitharaman",
+      "rank": "Cabinet",
+      "ministry": "Finance; Corporate Affairs",
+      "ps": ["S.S. Nakul", "Anirudh Pulipaka"],
+      "contact": "9845439107"
+    },
+    {
+      "name": "S. Jaishankar",
+      "rank": "Cabinet",
+      "ministry": "External Affairs",
+      "ps": "Sandeep Bayyapu",
+      "contact": "7042049944"
+    },
+    {
+      "name": "Manohar Lal",
+      "rank": "Cabinet",
+      "ministry": "Housing & Urban Affairs; Power",
+      "ps": ["B. Vijay Datta", "Naveen Kaushik"],
+      "contact": "7263000234"
+    },
+    {
+      "name": "H.D. Kumaraswamy",
+      "rank": "Cabinet",
+      "ministry": "Heavy Industries; Steel",
+      "ps": ["Tejasvi S. Naik", "Takhat Singh Ranawat"],
+      "contact": "9165471777"
+    },
+    {
+      "name": "Piyush Goyal",
+      "rank": "Cabinet",
+      "ministry": "Commerce & Industry",
+      "ps": "Ravi Jha",
+      "contact": "9436292112"
+    },
+    {
+      "name": "Dharmendra Pradhan",
+      "rank": "Cabinet",
+      "ministry": "Education",
+      "ps": ["Praveen Nair", "Tulika Singh"],
+      "contact": "8098470792"
+    },
+    {
+      "name": "Jitan Ram Manjhi",
+      "rank": "Cabinet",
+      "ministry": "MSME",
+      "ps": "Vibha Chahal",
+      "contact": "9990339973"
+    },
+    {
+      "name": "Rajiv Ranjan Singh",
+      "rank": "Cabinet",
+      "ministry": "Panchayati Raj; Fisheries & Animal Husbandry",
+      "ps": ["Sandeep Mahatme", "Pramod Kumar"],
+      "contact": "9402137219"
+    },
+    {
+      "name": "Sarbananda Sonowal",
+      "rank": "Cabinet",
+      "ministry": "Ports, Shipping & Waterways",
+      "ps": ["Amit Kumar", "P. Dinesh", "Tuhin Hazarika"],
+      "contact": "9931446122"
+    },
+    {
+      "name": "Virendra Kumar",
+      "rank": "Cabinet",
+      "ministry": "Social Justice & Empowerment",
+      "ps": ["Ashutosh Niranjan", "Bharat Chaudhary"],
+      "contact": "6398404027"
+    },
+    {
+      "name": "K. Ram Mohan Naidu",
+      "rank": "Cabinet",
+      "ministry": "Civil Aviation",
+      "ps": ["Shrikesha Lathkar", "M. Kanka"],
+      "contact": "8333002841"
+    },
+    {
+      "name": "Pralhad Joshi",
+      "rank": "Cabinet",
+      "ministry": "Consumer Affairs; Renewable Energy",
+      "ps": ["Nagesh Kumar B", "Narayan Gambhir"],
+      "contact": "7085865056"
+    },
+    {
+      "name": "Jual Oram",
+      "rank": "Cabinet",
+      "ministry": "Tribal Affairs",
+      "ps": "Gavli Parag Harshad",
+      "contact": "8280066880"
+    },
+    {
+      "name": "Giriraj Singh",
+      "rank": "Cabinet",
+      "ministry": "Textiles",
+      "ps": ["Raman Kumar", "Kumar Priyadarshi"],
+      "contact": "9934038007"
+    },
+    {
+      "name": "Ashwini Vaishnaw",
+      "rank": "Cabinet",
+      "ministry": "Railways; IT; I&B",
+      "ps": ["Kaustuv Pani", "Narayanchand Jinta"],
+      "contact": "9310811267"
+    },
+    {
+      "name": "Jyotiraditya Scindia",
+      "rank": "Cabinet",
+      "ministry": "Communications; DoNER",
+      "ps": ["Mayur Govekar", "Harish Papola"],
+      "contact": "9485330880"
+    },
+    {
+      "name": "Bhupender Yadav",
+      "rank": "Cabinet",
+      "ministry": "Environment & Climate Change",
+      "ps": ["Amar Singh", "Ayush Saran"],
+      "contact": "9969238354"
+    },
+    {
+      "name": "Annapurna Devi",
+      "rank": "Cabinet",
+      "ministry": "Women & Child Development",
+      "ps": "Ankita Chakraborty",
+      "contact": "8289008855"
+    },
+    {
+      "name": "Kiren Rijiju",
+      "rank": "Cabinet",
+      "ministry": "Parliamentary Affairs; Minority Affairs",
+      "ps": ["Sachin Jaiswal", "Tenzin Gyaltsen"],
+      "contact": "9717824814"
+    },
+    {
+      "name": "Hardeep Singh Puri",
+      "rank": "Cabinet",
+      "ministry": "Petroleum & Natural Gas",
+      "ps": "Rasaal Dwivedi",
+      "contact": "9990677788"
+    },
+    {
+      "name": "Mansukh Mandaviya",
+      "rank": "Cabinet",
+      "ministry": "Labour & Employment",
+      "ps": "Kshitij Jain",
+      "contact": "9010326000"
+    },
+    {
+      "name": "G. Kishan Reddy",
+      "rank": "Cabinet",
+      "ministry": "Coal & Mines; Youth Affairs",
+      "ps": "E.V. Bhaskar",
+      "contact": "9014694937"
+    },
+    {
+      "name": "Chirag Paswan",
+      "rank": "Cabinet",
+      "ministry": "Food Processing Industries",
+      "ps": "Abhishek Narang",
+      "contact": "9468300401"
+    },
+    {
+      "name": "C.R. Patil",
+      "rank": "Cabinet",
+      "ministry": "Jal Shakti",
+      "ps": ["Uday Chaudhari", "Vivek Patel"],
+      "contact": "9209195661"
+    }
+  ],
+  "ministers_of_state_independent_charge": [
+    {
+      "name": "Rao Inderjit Singh",
+      "rank": "MoS (Independent Charge)",
+      "ministry": "Culture; Statistics & Programme Implementation",
+      "ps": "Brahm Dutta",
+      "contact": "9811110089"
+    },
+    {
+      "name": "Jitendra Singh",
+      "rank": "MoS (Independent Charge)",
+      "ministry": "Science & Technology; PMO",
+      "ps": "Pankaj Dixit",
+      "contact": "9801683806"
+    },
+    {
+      "name": "Arjun Ram Meghwal",
+      "rank": "MoS (Independent Charge)",
+      "ministry": "Law & Justice; Parliamentary Affairs",
+      "ps": "Rajeev Verma",
+      "contact": "8744028185"
+    },
+    {
+      "name": "Prataprao Jadhav",
+      "rank": "MoS (Independent Charge)",
+      "ministry": "AYUSH; Health",
+      "ps": ["Nishant Mehra", "Rahul Solanki"],
+      "contact": "9868271027"
+    },
+    {
+      "name": "Jayant Chaudhary",
+      "rank": "MoS (Independent Charge)",
+      "ministry": "Skill Development; Education",
+      "ps": "Sujeet Kumar",
+      "contact": "9450201476"
+    }
+  ],
+  "ministers_of_state": [
+    {
+      "name": "Jitin Prasada",
+      "rank": "MoS",
+      "ministry": "Commerce & IT",
+      "ps": "H. Krishnan Unni",
+      "contact": "9965183688"
+    },
+    {
+      "name": "Shripad Naik",
+      "rank": "MoS",
+      "ministry": "Power & Renewable Energy",
+      "ps": "Mahesh Giwade",
+      "contact": "9763758654"
+    },
+    {
+      "name": "Pankaj Chaudhary",
+      "rank": "MoS",
+      "ministry": "Finance",
+      "ps": "Rishirendra Kumar",
+      "contact": "7007364235"
+    },
+    {
+      "name": "Krishan Pal",
+      "rank": "MoS",
+      "ministry": "Cooperation",
+      "ps": "Pavitra Kumar",
+      "contact": "9910418808"
+    },
+    {
+      "name": "Ramdas Athawale",
+      "rank": "MoS",
+      "ministry": "Social Justice",
+      "ps": "Pritivraj Bhati",
+      "contact": "9899345459"
+    },
+    {
+      "name": "Nityanand Rai",
+      "rank": "MoS",
+      "ministry": "Home Affairs",
+      "ps": "Prashant Ranjan",
+      "contact": "9999195333"
+    },
+    {
+      "name": "Anupriya Patel",
+      "rank": "MoS",
+      "ministry": "Health & Fertilizers",
+      "ps": "Akhilesh Kumar",
+      "contact": "9868099050"
+    },
+    {
+      "name": "V. Somanna",
+      "rank": "MoS",
+      "ministry": "Jal Shakti & Railways",
+      "ps": "Renu Kumar",
+      "contact": "9868393953"
+    },
+    {
+      "name": "Shobha Karandlaje",
+      "rank": "MoS",
+      "ministry": "MSME & Labour",
+      "ps": "Vibha Chahal",
+      "contact": "9990339973"
+    },
+    {
+      "name": "Bandi Sanjay Kumar",
+      "rank": "MoS",
+      "ministry": "Home Affairs",
+      "ps": "Andra Vamsi",
+      "contact": "7080332888"
+    },
+    {
+      "name": "Kamlesh Paswan",
+      "rank": "MoS",
+      "ministry": "Rural Development",
+      "ps": "Swapnil Patil",
+      "contact": "950384459"
+    },
+    {
+      "name": "Sukanta Majumdar",
+      "rank": "MoS",
+      "ministry": "Education & DoNER",
+      "ps": "Parth Gautam",
+      "contact": "9958421270"
+    },
+    {
+      "name": "Suresh Gopi",
+      "rank": "MoS",
+      "ministry": "Petroleum & Tourism",
+      "ps": "Narain S. N.",
+      "contact": "8056422792"
+    },
+    {
+      "name": "Ajay Tamta",
+      "rank": "MoS",
+      "ministry": "Road Transport & Highways",
+      "ps": "Nikhil Saraswat",
+      "contact": "9456697978"
+    },
+    {
+      "name": "Harsh Malhotra",
+      "rank": "MoS",
+      "ministry": "Corporate Affairs & Transport",
+      "ps": "Bharat Maheshwari",
+      "contact": "9410148001"
+    },
+    {
+      "name": "Tokhan Sahu",
+      "rank": "MoS",
+      "ministry": "Housing & Urban Affairs",
+      "ps": "Mukesh Bahadur Singh",
+      "contact": "9415834620"
+    },
+    {
+      "name": "Raj Bhushan Choudhary",
+      "rank": "MoS",
+      "ministry": "Jal Shakti",
+      "ps": "Arjun Singh",
+      "contact": "9013851045"
+    },
+    {
+      "name": "Bhupathi Raju Varma",
+      "rank": "MoS",
+      "ministry": "Heavy Industries & Steel",
+      "ps": "Rajesh Kumar",
+      "contact": "9911735878"
+    }
+  ]
+}

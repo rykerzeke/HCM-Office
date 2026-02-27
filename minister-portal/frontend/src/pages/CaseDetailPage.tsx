@@ -16,7 +16,8 @@ export const CaseDetailPage = () => {
   const [commentContent, setCommentContent] = useState('');
   const [commentImage, setCommentImage] = useState<File | null>(null);
   const [officials, setOfficials] = useState<any[]>([]);
-  const [selectedOfficial, setSelectedOfficial] = useState('');
+  const [searchOfficial, setSearchOfficial] = useState('');
+  const [stakeholderToRemove, setStakeholderToRemove] = useState<string | null>(null);
 
   const fetchCase = useCallback(async () => {
     try {
@@ -32,7 +33,7 @@ export const CaseDetailPage = () => {
   const fetchOfficials = useCallback(async () => {
     if (!caseData?.citizen) return;
     try {
-      const res = await api.get(`/officials?stateId=${caseData.citizen.stateId}&districtId=${caseData.citizen.districtId}`);
+      const res = await api.get('/officials');
       setOfficials(res.data);
     } catch (err) {
       console.error(err);
@@ -71,11 +72,18 @@ export const CaseDetailPage = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleMapStakeholder = async () => {
-    if (!selectedOfficial) return;
+  const handleMapStakeholder = async (officialIdToMap: string) => {
     try {
-      await api.post(`/cases/${id}/stakeholders`, { officialId: selectedOfficial });
-      setSelectedOfficial('');
+      await api.post(`/cases/${id}/stakeholders`, { officialId: officialIdToMap });
+      fetchCase();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleRemoveStakeholder = async () => {
+    if (!stakeholderToRemove) return;
+    try {
+      await api.delete(`/cases/${id}/stakeholders/${stakeholderToRemove}`);
+      setStakeholderToRemove(null);
       fetchCase();
     } catch (err) { console.error(err); }
   };
@@ -221,10 +229,21 @@ export const CaseDetailPage = () => {
                 {caseData.stakeholders.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {caseData.stakeholders.map((s: any) => (
-                      <div key={s.officialId} className="glass-light rounded-xl p-4">
-                        <p className="text-sm font-semibold text-white">{s.official.name}</p>
-                        <p className="text-xs text-primary-400 mt-1">{s.official.designation}</p>
-                        <p className="text-xs text-surface-500">{s.official.department}</p>
+                      <div key={s.officialId} className="glass-light rounded-xl p-4 flex items-start justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{s.official.name}</p>
+                          <p className="text-xs text-primary-400 mt-1">{s.official.designation}</p>
+                          <p className="text-xs text-surface-500">{s.official.department}</p>
+                        </div>
+                        {user?.role !== 'OFFICIAL' && (
+                          <button
+                            onClick={() => setStakeholderToRemove(s.officialId)}
+                            className="p-1.5 text-surface-400 hover:text-red-400 hover:bg-red-400/10 rounded ml-2 transition-colors"
+                            title="Remove Stakeholder"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -232,23 +251,58 @@ export const CaseDetailPage = () => {
                   <p className="text-sm text-surface-500">No stakeholders mapped yet.</p>
                 )}
                 {user?.role !== 'OFFICIAL' && (
-                  <div className="mt-6 glass-light rounded-xl p-5 flex items-end gap-3">
-                    <div className="flex-1">
-                      <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Add Stakeholder</label>
-                      <select
-                        className="select-dark w-full"
-                        value={selectedOfficial}
-                        onChange={e => setSelectedOfficial(e.target.value)}
-                      >
-                        <option value="">Select Official...</option>
-                        {officials.filter(o => !caseData.stakeholders.find((s: any) => s.officialId === o.id)).map((o: any) => (
-                          <option key={o.id} value={o.id}>{o.name} — {o.designation}</option>
-                        ))}
-                      </select>
+                  <div className="mt-8">
+                    <h4 className="text-sm font-semibold text-white mb-3">Add Stakeholder</h4>
+                    <div className="glass-light rounded-xl p-0 overflow-hidden">
+                      <div className="p-4 border-b border-white/5">
+                        <input 
+                          type="text" 
+                          placeholder="Search stakeholders by name, designation, or department..." 
+                          className="input-dark w-full"
+                          value={searchOfficial}
+                          onChange={e => setSearchOfficial(e.target.value)}
+                        />
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        <table className="w-full text-left text-sm text-surface-300">
+                          <thead className="text-xs text-surface-400 uppercase bg-white/[0.02] sticky top-0 backdrop-blur-md">
+                            <tr>
+                              <th className="px-4 py-3 font-medium">Name & Details</th>
+                              <th className="px-4 py-3 font-medium">Ministry/Dept</th>
+                              <th className="px-4 py-3 font-medium">Contact & Address</th>
+                              <th className="px-4 py-3 font-medium text-right">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            {officials
+                              .filter(o => !caseData.stakeholders.find((s: any) => s.officialId === o.id))
+                              .filter(o => !searchOfficial || [o.name, o.designation, o.department, o.psName].some(val => val?.toLowerCase().includes(searchOfficial.toLowerCase())))
+                              .map((o: any) => (
+                              <tr key={o.id} className="hover:bg-white/[0.02] transition-colors">
+                                <td className="px-4 py-3 align-top">
+                                  <p className="font-semibold text-white">{o.name}</p>
+                                  <p className="text-xs text-primary-400 mt-0.5">{o.designation}</p>
+                                  {o.psName && <p className="text-xs text-surface-500 mt-0.5">PS: {o.psName}</p>}
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  <p className="text-sm text-surface-200">{o.department}</p>
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  {o.contact && <p className="text-sm text-surface-200">{o.contact}</p>}
+                                  {o.email && <p className="text-xs text-surface-400 mt-0.5">{o.email}</p>}
+                                  {o.address && <p className="text-xs text-surface-500 mt-1 max-w-[200px] truncate" title={o.address}>{o.address}</p>}
+                                </td>
+                                <td className="px-4 py-3 align-top text-right">
+                                  <button onClick={() => handleMapStakeholder(o.id)} className="btn-ghost text-xs py-1.5 px-3">
+                                    Map
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    <button onClick={handleMapStakeholder} disabled={!selectedOfficial} className="btn-primary">
-                      Map
-                    </button>
                   </div>
                 )}
               </div>
@@ -395,6 +449,30 @@ export const CaseDetailPage = () => {
           )}
         </div>
       </div>
+
+      {stakeholderToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setStakeholderToRemove(null)}></div>
+          <div className="glass max-w-sm w-full rounded-2xl p-6 relative animate-fade-in shadow-2xl">
+            <h3 className="text-lg font-semibold text-white mb-2">Remove Stakeholder</h3>
+            <p className="text-surface-300 text-sm mb-6">Are you sure you want to remove this stakeholder from the case? This action cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setStakeholderToRemove(null)} 
+                className="btn-ghost"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRemoveStakeholder} 
+                className="btn-danger shadow-lg shadow-red-500/20"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

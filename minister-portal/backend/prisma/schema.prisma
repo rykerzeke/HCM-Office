@@ -101,6 +101,9 @@ model Official {
   designation String
   department  String?
   contact     String?
+  address     String?
+  email       String?
+  psName      String?
   districtId  String?
   stateId     String?
 

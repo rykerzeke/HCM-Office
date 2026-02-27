@@ -24,6 +24,7 @@ const server = fastify({ logger: true });
 // Plugins
 server.register(cors, {
   origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 });
 
 server.register(fastifyJwt, {
@@ -51,9 +52,11 @@ server.get('/health', async () => {
   return { status: 'OK' };
 });
 
-import path from 'path';
-server.register(require('@fastify/static'), {
-  root: path.join(__dirname, '../../uploads'),
+import path from 'node:path';
+import fastifyStatic from '@fastify/static';
+
+server.register(fastifyStatic, {
+  root: path.join(__dirname, '../uploads'),
   prefix: '/uploads/',
 });
 
