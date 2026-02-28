@@ -152,11 +152,13 @@ export default async function caseRoutes(fastify: FastifyInstance) {
       if (c.status !== 'APPROVED')
         return reply.status(400).send({ error: 'Only approved requests can be scheduled' });
 
-      const scheduledDate = new Date(data.scheduledDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (scheduledDate < today)
+      // Compare calendar dates in server local time to avoid UTC/local mismatch
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      if (data.scheduledDate < todayStr)
         return reply.status(400).send({ error: 'Past dates are not allowed' });
+
+      const scheduledDate = new Date(data.scheduledDate + 'T12:00:00'); // noon to avoid UTC-midnight edge cases
 
       const updated = await prisma.case.update({
         where: { id },
@@ -201,7 +203,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // 6. Post-meeting closure
+  // 6. Post-meeting closure (only when scheduled or check-in recorded)
   fastify.patch('/cases/:id/close', { preValidation: auth }, async (request, reply) => {
     try {
       const { id } = request.params as any;
@@ -210,6 +212,10 @@ export default async function caseRoutes(fastify: FastifyInstance) {
 
       const c = await prisma.case.findUnique({ where: { id } });
       if (!c) return reply.status(404).send({ error: 'Case not found' });
+
+      const canClose = c.status === 'SCHEDULED' || c.visitCheckIn != null;
+      if (!canClose)
+        return reply.status(400).send({ error: 'Case can only be closed when scheduled or after check-in (Arrived / No-show / Rescheduled)' });
 
       const updated = await prisma.case.update({
         where: { id },

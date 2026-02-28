@@ -234,8 +234,8 @@ export const CaseDetailPage = () => {
               <button type="submit" disabled={workflowBusy} className="btn-primary text-sm">Schedule</button>
             </form>
           )}
-          {/* 5. Visit day check-in: Scheduled */}
-          {caseData.status === 'SCHEDULED' && (
+          {/* 5. Visit day check-in: only when scheduled and no check-in recorded yet */}
+          {caseData.status === 'SCHEDULED' && !caseData.visitCheckIn && (
             <>
               <button onClick={() => handleCheckIn('ARRIVED')} disabled={workflowBusy} className="btn-ghost inline-flex items-center gap-2 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10">
                 <CheckCircle className="h-4 w-4" /> Arrived
@@ -248,7 +248,7 @@ export const CaseDetailPage = () => {
               </button>
             </>
           )}
-          {/* 6. Post-meeting closure: Scheduled (or Arrived) */}
+          {/* 6. Post-meeting closure: when scheduled (after check-in or without) or already marked arrived */}
           {(caseData.status === 'SCHEDULED' || caseData.visitCheckIn === 'ARRIVED') && (
             <form onSubmit={handleClose} className="flex flex-wrap items-center gap-2">
               <select className="select-dark text-sm w-44" value={closureStatus} onChange={e => setClosureStatus(e.target.value as any)}>
