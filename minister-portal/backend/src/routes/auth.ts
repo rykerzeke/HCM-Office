@@ -1,10 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import prisma from '../data/prisma';
 import { loginSchema } from '../utils/validation';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 
 export default async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/login', async (request, reply) => {
@@ -32,9 +31,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/me', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     const user = (request.user as any);
     const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
@@ -44,9 +41,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/users', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     const users = await prisma.user.findMany({
       select: { id: true, name: true, role: true, email: true }

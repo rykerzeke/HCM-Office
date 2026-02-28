@@ -1,7 +1,12 @@
 import crypto from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+const _key = process.env.ENCRYPTION_KEY;
+if (!_key) {
+  console.error('FATAL: ENCRYPTION_KEY environment variable is required');
+  process.exit(1);
+}
+const ENCRYPTION_KEY: string = _key;
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(16);

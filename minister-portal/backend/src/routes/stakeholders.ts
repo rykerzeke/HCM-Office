@@ -1,14 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 
 export default async function stakeholderRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/stakeholders', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId } = request.params as any;
@@ -29,9 +26,7 @@ export default async function stakeholderRoutes(fastify: FastifyInstance) {
   });
 
   fastify.delete('/cases/:caseId/stakeholders/:officialId', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId, officialId } = request.params as any;

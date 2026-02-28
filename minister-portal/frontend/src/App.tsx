@@ -37,6 +37,15 @@ function App() {
             <Route path="/cases/new" element={<ProtectedRoute><NewCasePage /></ProtectedRoute>} />
             <Route path="/cases/:id" element={<ProtectedRoute><CaseDetailPage /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+
+            {/* 404 Catch-all */}
+            <Route path="*" element={
+              <div className="flex h-screen items-center justify-center flex-col gap-4">
+                <h1 className="text-4xl font-bold text-surface-200">404</h1>
+                <p className="text-surface-400">Page not found</p>
+                <a href="/" className="text-primary-400 hover:underline">Go to Dashboard</a>
+              </div>
+            } />
           </Routes>
         </Router>
       </AuthProvider>

@@ -1,13 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../data/prisma';
+import { authenticate } from '../middleware/authenticate';
 
 export default async function auditRoutes(fastify: FastifyInstance) {
   fastify.get('/audit', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     const { caseId, limit = 50 } = request.query as any;
     

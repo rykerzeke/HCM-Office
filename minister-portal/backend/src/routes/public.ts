@@ -1,11 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { z } from 'zod';
 import { encrypt } from '../utils/encryption';
 import { generateCaseId } from '../utils/caseId';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
 
 const requestCategoryEnum = z.enum([
   'PUBLIC_GRIEVANCE', 'POLICY_REQUEST', 'PERSONAL_ISSUE', 'LAND_AND_REVENUE',

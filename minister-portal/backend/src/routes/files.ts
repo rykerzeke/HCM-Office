@@ -1,11 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 const UPLOAD_DIR = path.join(__dirname, '../../uploads');
 
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -14,9 +13,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 export default async function fileRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/files', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId } = request.params as any;
@@ -37,7 +34,7 @@ export default async function fileRoutes(fastify: FastifyInstance) {
               filename: part.filename,
               path: `/uploads/${filename}`,
               mimetype: part.mimetype,
-              size: 0, // Should calculate real size
+              size: fs.statSync(filePath).size,
             }
           });
           filesUploaded.push(fileRecord);

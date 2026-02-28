@@ -2,6 +2,8 @@ import fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
+import path from 'node:path';
+import fastifyStatic from '@fastify/static';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth';
@@ -28,8 +30,13 @@ server.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 });
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required');
+  process.exit(1);
+}
+
 server.register(fastifyJwt, {
-  secret: process.env.JWT_SECRET || 'supersecretkey123',
+  secret: process.env.JWT_SECRET,
 });
 
 server.register(multipart);
@@ -54,8 +61,7 @@ server.get('/health', async () => {
   return { status: 'OK' };
 });
 
-import path from 'node:path';
-import fastifyStatic from '@fastify/static';
+
 
 server.register(fastifyStatic, {
   root: path.join(__dirname, '../uploads'),

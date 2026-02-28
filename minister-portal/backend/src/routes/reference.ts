@@ -1,7 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../data/prisma';
 
 // Minister Meeting Workflow: fixed referring officers
 const REFERRING_OFFICERS = [
@@ -82,7 +80,6 @@ export default async function referenceRoutes(fastify: FastifyInstance) {
       where: { category }
     });
     if (!mapping) return reply.send([]);
-    const keyword = mapping.departmentKeyword.toLowerCase();
     const whereClause: any = {
       OR: [
         { department: { contains: mapping.departmentKeyword } },

@@ -1,15 +1,12 @@
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { createCommentSchema } from '../utils/validation';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 
 export default async function commentRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/comments', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId } = request.params as any;

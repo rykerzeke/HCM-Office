@@ -1,15 +1,12 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { assignCaseSchema } from '../utils/validation';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 
 export default async function assignmentRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/assignments', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId } = request.params as any;
@@ -43,9 +40,7 @@ export default async function assignmentRoutes(fastify: FastifyInstance) {
   });
 
   fastify.patch('/cases/:caseId/status', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId } = request.params as any;
@@ -66,9 +61,7 @@ export default async function assignmentRoutes(fastify: FastifyInstance) {
   });
 
   fastify.patch('/cases/:caseId/assignments/:assignmentId', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const { caseId, assignmentId } = request.params as any;

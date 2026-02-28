@@ -1,14 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { createCaseSchema, approveRejectSchema, scheduleMeetingSchema, visitCheckInSchema, closeMeetingSchema } from '../utils/validation';
 import { generateCaseId } from '../utils/caseId';
 import { logAudit } from '../services/audit';
+import { authenticate } from '../middleware/authenticate';
 
-const prisma = new PrismaClient();
-
-const auth = [async (request: any, reply: any) => {
-  try { await request.jwtVerify(); } catch (err) { reply.send(err); }
-}];
+const auth = [authenticate];
 
 export default async function caseRoutes(fastify: FastifyInstance) {
   // 1. Request submission – require referring officer & reference mode
@@ -43,9 +40,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/cases', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     // Pagination & Search
     const { page = 1, limit = 10, search, status, priority, category } = request.query as any;
@@ -87,9 +82,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/cases/:id', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     const { id } = request.params as any;
     const caseDetails = await prisma.case.findUnique({

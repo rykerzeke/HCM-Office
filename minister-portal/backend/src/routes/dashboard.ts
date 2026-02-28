@@ -1,13 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../data/prisma';
+import { authenticate } from '../middleware/authenticate';
 
 export default async function dashboardRoutes(fastify: FastifyInstance) {
   fastify.get('/dashboard/stats', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     const totalRequests = await prisma.case.count();
     const pendingApproval = await prisma.case.count({ where: { status: 'PENDING_APPROVAL' } });

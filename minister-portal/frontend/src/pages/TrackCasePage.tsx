@@ -21,9 +21,9 @@ export const TrackCasePage = () => {
       setError('');
       setCaseData(null);
 
-      const res = await api.get('/cases', { params: { search: searchQuery } });
-      if (res.data.data.length > 0) {
-        setCaseData(res.data.data[0]);
+      const res = await api.get('/public/track', { params: { query: searchQuery } });
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setCaseData(res.data[0]);
       } else {
         setError('No case found with this Case ID or Phone Number.');
       }

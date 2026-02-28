@@ -1,13 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { createCommunicationLogSchema } from '../utils/validation';
 import { logAudit } from '../services/audit';
+import { authenticate } from '../middleware/authenticate';
 
-const prisma = new PrismaClient();
-
-const auth = [async (request: any, reply: any) => {
-  try { await request.jwtVerify(); } catch (err) { reply.send(err); }
-}];
+const auth = [authenticate];
 
 export default async function communicationRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/communications', { preValidation: auth }, async (request, reply) => {

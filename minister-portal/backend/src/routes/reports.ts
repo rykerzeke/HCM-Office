@@ -1,11 +1,10 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 
 // Margins in inches -> points (72 pt = 1 inch)
 const MARGIN_TOP = 0.68 * 72;
@@ -20,9 +19,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   URGENT: '#ef4444',  // red
 };
 
-const auth = [async (request: any, reply: any) => {
-  try { await request.jwtVerify(); } catch (err) { return reply.send(err); }
-}];
+const auth = [authenticate];
 
 export default async function reportRoutes(fastify: FastifyInstance) {
   fastify.get('/reports', {

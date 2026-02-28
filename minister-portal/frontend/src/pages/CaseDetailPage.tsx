@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
-import { MessageSquare, Paperclip, Activity, FileText, UserPlus, Send, History, Play, CheckCircle, AlertTriangle, ImageIcon, X, Phone, Calendar } from 'lucide-react';
+import { MessageSquare, Paperclip, Activity, FileText, UserPlus, Send, History, CheckCircle, AlertTriangle, ImageIcon, X, Phone, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const CaseDetailPage = () => {
@@ -690,7 +690,7 @@ export const CaseDetailPage = () => {
                       </div>
                       {comment.imageUrl && (
                         <div className="mb-3">
-                          <img src={`http://localhost:4000${comment.imageUrl}`} alt="Attachment" className="max-w-[16rem] rounded-lg object-cover border border-white/5 shadow-md" />
+                          <img src={`${uploadsBase}${comment.imageUrl}`} alt="Attachment" className="max-w-[16rem] rounded-lg object-cover border border-white/5 shadow-md" />
                         </div>
                       )}
                       <p className="text-sm text-surface-200 whitespace-pre-wrap leading-relaxed">{comment.content}</p>

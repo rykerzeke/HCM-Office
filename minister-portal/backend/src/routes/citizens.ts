@@ -1,16 +1,13 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../data/prisma';
 import { createCitizenSchema } from '../utils/validation';
 import { encrypt, decrypt } from '../utils/encryption';
 import { logAudit } from '../services/audit';
-
-const prisma = new PrismaClient();
+import { authenticate } from '../middleware/authenticate';
 
 export default async function citizenRoutes(fastify: FastifyInstance) {
   fastify.post('/citizens', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     try {
       const data = createCitizenSchema.parse(request.body);
@@ -38,15 +35,13 @@ export default async function citizenRoutes(fastify: FastifyInstance) {
 
       return reply.send(citizen);
     } catch (err: any) {
-      console.log(err);
+      console.error('Citizen creation error:', err);
       return reply.status(400).send({ error: 'Validation failed or duplicate phone', details: err.errors });
     }
   });
 
   fastify.get('/citizens', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
+    preValidation: [authenticate]
   }, async (request, reply) => {
     const { search } = request.query as any;
     
