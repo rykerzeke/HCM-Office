@@ -248,8 +248,8 @@ export const CaseDetailPage = () => {
               </button>
             </>
           )}
-          {/* 6. Post-meeting closure: when scheduled (after check-in or without) or already marked arrived */}
-          {(caseData.status === 'SCHEDULED' || caseData.visitCheckIn === 'ARRIVED') && (
+          {/* 6. Post-meeting closure: when scheduled or any check-in recorded (matches backend: visitCheckIn != null) */}
+          {(caseData.status === 'SCHEDULED' || caseData.visitCheckIn != null) && (
             <form onSubmit={handleClose} className="flex flex-wrap items-center gap-2">
               <select className="select-dark text-sm w-44" value={closureStatus} onChange={e => setClosureStatus(e.target.value as any)}>
                 <option value="COMPLETED">Completed</option>
