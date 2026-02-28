@@ -10,6 +10,7 @@ import { CaseDetailPage } from './pages/CaseDetailPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { TrackCasePage } from './pages/TrackCasePage';
 import { BookAppointmentPage } from './pages/BookAppointmentPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ function App() {
             <Route path="/cases/new" element={<ProtectedRoute><NewCasePage /></ProtectedRoute>} />
             <Route path="/cases/:id" element={<ProtectedRoute><CaseDetailPage /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
             {/* 404 Catch-all */}
             <Route path="*" element={

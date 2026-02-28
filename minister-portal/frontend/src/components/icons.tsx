@@ -26,6 +26,7 @@ import {
   ChevronRight24Regular,
   Send24Regular,
   DocumentAdd24Regular,
+  Settings24Regular,
 } from '@fluentui/react-icons';
 
 const iconClass = 'shrink-0';
@@ -57,4 +58,5 @@ export const Icons = {
   SendHorizonal: (p: React.SVGProps<SVGSVGElement>) => <Send24Regular className={iconClass} {...p} />,
   LayoutDashboard: (p: React.SVGProps<SVGSVGElement>) => <ChartMultiple24Regular className={iconClass} {...p} />,
   Phone: (p: React.SVGProps<SVGSVGElement>) => <Person24Regular className={iconClass} {...p} />,
+  Settings: (p: React.SVGProps<SVGSVGElement>) => <Settings24Regular className={iconClass} {...p} />,
 };
