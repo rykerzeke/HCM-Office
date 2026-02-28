@@ -76,10 +76,15 @@ export const CaseListPage = () => {
             className="select-dark sm:w-44"
           >
             <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="ESCALATED">Escalated</option>
+            <option value="PENDING_APPROVAL">Pending Approval</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="SCHEDULED">Scheduled</option>
             <option value="COMPLETED">Completed</option>
+            <option value="CLOSED">Closed</option>
+            <option value="NO_SHOW">No Show</option>
+            <option value="RESCHEDULED">Rescheduled</option>
           </select>
 
           <select

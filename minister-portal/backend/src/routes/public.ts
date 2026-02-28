@@ -62,7 +62,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
           citizenId: citizen.id,
           purpose: data.purpose,
           meetingDate: data.preferredDate ? new Date(data.preferredDate) : null,
-          status: 'PENDING',
+          status: 'PENDING_APPROVAL',
           priority: 'MEDIUM',
         }
       });

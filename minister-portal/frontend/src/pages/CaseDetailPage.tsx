@@ -19,6 +19,16 @@ export const CaseDetailPage = () => {
   const [searchOfficial, setSearchOfficial] = useState('');
   const [stakeholderToRemove, setStakeholderToRemove] = useState<string | null>(null);
 
+  // Minister Meeting Workflow
+  const [rejectReason, setRejectReason] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTimeSlot, setScheduleTimeSlot] = useState('');
+  const [meetingType, setMeetingType] = useState<'IN_PERSON' | 'VIRTUAL'>('IN_PERSON');
+  const [venueOrLink, setVenueOrLink] = useState('');
+  const [closureStatus, setClosureStatus] = useState<'COMPLETED' | 'FOLLOW_UP_REQUIRED' | 'RESCHEDULE_REQUIRED'>('COMPLETED');
+  const [closureNotes, setClosureNotes] = useState('');
+  const [workflowBusy, setWorkflowBusy] = useState(false);
+
   const fetchCase = useCallback(async () => {
     try {
       const res = await api.get(`/cases/${id}`);
@@ -43,11 +53,71 @@ export const CaseDetailPage = () => {
   useEffect(() => { fetchCase(); }, [fetchCase]);
   useEffect(() => { if (activeTab === 'stakeholders') fetchOfficials(); }, [activeTab, fetchOfficials]);
 
-  const handleUpdateStatus = async (status: string) => {
+  const handleAuthorize = async (action: 'APPROVE' | 'REJECT' | 'REQUEST_CLARIFICATION') => {
     try {
-      await api.patch(`/cases/${id}/status`, { status });
+      setWorkflowBusy(true);
+      await api.patch(`/cases/${id}/authorize`, {
+        action,
+        rejectionReason: action === 'REJECT' ? rejectReason : undefined,
+      });
+      setRejectReason('');
       fetchCase();
-    } catch (err) { console.error(err); }
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Action failed');
+    } finally {
+      setWorkflowBusy(false);
+    }
+  };
+
+  const handleSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleDate || !scheduleTimeSlot) return;
+    try {
+      setWorkflowBusy(true);
+      await api.patch(`/cases/${id}/schedule`, {
+        scheduledDate: scheduleDate,
+        scheduledTimeSlot: scheduleTimeSlot,
+        meetingType,
+        venueOrLink: venueOrLink || undefined,
+      });
+      setScheduleDate('');
+      setScheduleTimeSlot('');
+      setVenueOrLink('');
+      fetchCase();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Scheduling failed');
+    } finally {
+      setWorkflowBusy(false);
+    }
+  };
+
+  const handleCheckIn = async (checkIn: 'ARRIVED' | 'NO_SHOW' | 'RESCHEDULED') => {
+    try {
+      setWorkflowBusy(true);
+      await api.patch(`/cases/${id}/checkin`, { checkIn });
+      fetchCase();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Check-in failed');
+    } finally {
+      setWorkflowBusy(false);
+    }
+  };
+
+  const handleClose = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setWorkflowBusy(true);
+      await api.patch(`/cases/${id}/close`, {
+        closureStatus,
+        closureNotes: closureNotes || undefined,
+      });
+      setClosureNotes('');
+      fetchCase();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Closure failed');
+    } finally {
+      setWorkflowBusy(false);
+    }
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -135,21 +205,60 @@ export const CaseDetailPage = () => {
           </p>
         </div>
 
-        <div className="flex gap-2">
-          {caseData.status === 'PENDING' && (
-            <button onClick={() => handleUpdateStatus('IN_PROGRESS')} className="btn-ghost inline-flex items-center gap-2 text-blue-400 border-blue-500/20 hover:bg-blue-500/10">
-              <Play className="h-4 w-4" /> Start
-            </button>
+        <div className="flex flex-wrap gap-2">
+          {/* 2. Authorization: Pending Approval / On Hold */}
+          {(caseData.status === 'PENDING_APPROVAL' || caseData.status === 'ON_HOLD') && (
+            <>
+              <button onClick={() => handleAuthorize('APPROVE')} disabled={workflowBusy} className="btn-ghost inline-flex items-center gap-2 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10">
+                <CheckCircle className="h-4 w-4" /> Approve
+              </button>
+              <button onClick={() => handleAuthorize('REQUEST_CLARIFICATION')} disabled={workflowBusy} className="btn-ghost inline-flex items-center gap-2 text-amber-400 border-amber-500/20 hover:bg-amber-500/10">
+                <AlertTriangle className="h-4 w-4" /> Request Clarification
+              </button>
+              <div className="inline-flex items-center gap-1">
+                <input type="text" placeholder="Rejection reason..." className="input-dark w-48 text-sm" value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
+                <button onClick={() => handleAuthorize('REJECT')} disabled={workflowBusy} className="btn-ghost text-rose-400 border-rose-500/20 hover:bg-rose-500/10">Reject</button>
+              </div>
+            </>
           )}
-          {caseData.status === 'IN_PROGRESS' && (
-            <button onClick={() => handleUpdateStatus('COMPLETED')} className="btn-ghost inline-flex items-center gap-2 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10">
-              <CheckCircle className="h-4 w-4" /> Complete
-            </button>
+          {/* 3. Scheduling: Approved */}
+          {caseData.status === 'APPROVED' && (
+            <form onSubmit={handleSchedule} className="flex flex-wrap items-center gap-2">
+              <input type="date" className="input-dark text-sm" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} min={new Date().toISOString().slice(0, 10)} required />
+              <input type="text" placeholder="Time slot (e.g. 10:00-10:30)" className="input-dark w-40 text-sm" value={scheduleTimeSlot} onChange={e => setScheduleTimeSlot(e.target.value)} required />
+              <select className="select-dark text-sm w-32" value={meetingType} onChange={e => setMeetingType(e.target.value as any)}>
+                <option value="IN_PERSON">In-person</option>
+                <option value="VIRTUAL">Virtual</option>
+              </select>
+              <input type="text" placeholder="Venue / Link" className="input-dark w-40 text-sm" value={venueOrLink} onChange={e => setVenueOrLink(e.target.value)} />
+              <button type="submit" disabled={workflowBusy} className="btn-primary text-sm">Schedule</button>
+            </form>
           )}
-          {(caseData.status === 'PENDING' || caseData.status === 'IN_PROGRESS') && (
-            <button onClick={() => handleUpdateStatus('ESCALATED')} className="btn-ghost inline-flex items-center gap-2 text-rose-400 border-rose-500/20 hover:bg-rose-500/10">
-              <AlertTriangle className="h-4 w-4" /> Escalate
-            </button>
+          {/* 5. Visit day check-in: Scheduled */}
+          {caseData.status === 'SCHEDULED' && (
+            <>
+              <button onClick={() => handleCheckIn('ARRIVED')} disabled={workflowBusy} className="btn-ghost inline-flex items-center gap-2 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10">
+                <CheckCircle className="h-4 w-4" /> Arrived
+              </button>
+              <button onClick={() => handleCheckIn('NO_SHOW')} disabled={workflowBusy} className="btn-ghost inline-flex items-center gap-2 text-rose-400 border-rose-500/20 hover:bg-rose-500/10">
+                No-show
+              </button>
+              <button onClick={() => handleCheckIn('RESCHEDULED')} disabled={workflowBusy} className="btn-ghost inline-flex items-center gap-2 text-amber-400 border-amber-500/20 hover:bg-amber-500/10">
+                Rescheduled
+              </button>
+            </>
+          )}
+          {/* 6. Post-meeting closure: Scheduled (or Arrived) */}
+          {(caseData.status === 'SCHEDULED' || caseData.visitCheckIn === 'ARRIVED') && (
+            <form onSubmit={handleClose} className="flex flex-wrap items-center gap-2">
+              <select className="select-dark text-sm w-44" value={closureStatus} onChange={e => setClosureStatus(e.target.value as any)}>
+                <option value="COMPLETED">Completed</option>
+                <option value="FOLLOW_UP_REQUIRED">Follow-up required</option>
+                <option value="RESCHEDULE_REQUIRED">Reschedule required</option>
+              </select>
+              <input type="text" placeholder="Notes / action items" className="input-dark w-48 text-sm" value={closureNotes} onChange={e => setClosureNotes(e.target.value)} />
+              <button type="submit" disabled={workflowBusy} className="btn-primary text-sm">Close</button>
+            </form>
           )}
         </div>
       </div>
@@ -192,9 +301,49 @@ export const CaseDetailPage = () => {
                   <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-3">Request Purpose</h3>
                   <p className="text-sm text-surface-200 whitespace-pre-wrap glass-light rounded-xl p-5 leading-relaxed">{caseData.purpose}</p>
                 </div>
-                {caseData.meetingDate && (
+                {(caseData.referringOfficer || caseData.referenceMode) && (
                   <div>
-                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Meeting Date</h3>
+                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Reference</h3>
+                    <p className="text-sm text-surface-300">
+                      {caseData.referringOfficer && <span>Referring Officer: <span className="text-white">{caseData.referringOfficer.replace(/_/g, ' ')}</span></span>}
+                      {caseData.referringOfficer && caseData.referenceMode && ' · '}
+                      {caseData.referenceMode && <span>Mode: <span className="text-white">{caseData.referenceMode}</span></span>}
+                    </p>
+                  </div>
+                )}
+                {caseData.rejectionReason && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Rejection Reason</h3>
+                    <p className="text-sm text-rose-300 glass-light rounded-xl p-4">{caseData.rejectionReason}</p>
+                  </div>
+                )}
+                {(caseData.scheduledDate || caseData.scheduledTimeSlot) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Scheduled Meeting</h3>
+                    <p className="text-sm text-surface-300">
+                      {caseData.scheduledDate && format(new Date(caseData.scheduledDate), 'PPP')}
+                      {caseData.scheduledTimeSlot && ` · ${caseData.scheduledTimeSlot}`}
+                      {caseData.meetingType && ` · ${caseData.meetingType.replace('_', '-')}`}
+                    </p>
+                    {caseData.venueOrLink && <p className="text-sm text-primary-400 mt-1">{caseData.venueOrLink}</p>}
+                  </div>
+                )}
+                {caseData.visitCheckIn && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Visit Check-in</h3>
+                    <p className="text-sm text-surface-300">{caseData.visitCheckIn.replace('_', ' ')}</p>
+                  </div>
+                )}
+                {(caseData.closureStatus || caseData.closureNotes) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Closure</h3>
+                    {caseData.closureStatus && <p className="text-sm text-surface-300">{caseData.closureStatus.replace(/_/g, ' ')}</p>}
+                    {caseData.closureNotes && <p className="text-sm text-surface-200 mt-2 glass-light rounded-xl p-4">{caseData.closureNotes}</p>}
+                  </div>
+                )}
+                {caseData.meetingDate && !caseData.scheduledDate && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider mb-2">Preferred Date</h3>
                     <p className="text-sm text-surface-300">{format(new Date(caseData.meetingDate), 'PPpp')}</p>
                   </div>
                 )}

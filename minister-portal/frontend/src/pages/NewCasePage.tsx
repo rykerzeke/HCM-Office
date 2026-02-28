@@ -4,6 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Icons } from '../components/icons';
 import { SearchableStateSelect } from '../components/SearchableStateSelect';
 
+// Fallback options when API is unavailable (must match backend enums)
+const DEFAULT_REFERRING_OFFICERS: { id: string; name: string }[] = [
+  { id: 'VISHAL_GUPTA', name: 'Vishal Gupta' },
+  { id: 'MAHENDRA_PRATAP_SINGH', name: 'Mahendra Pratap Singh' },
+  { id: 'CHIRAG_PANCHAL', name: 'Chirag Panchal' },
+];
+const DEFAULT_REFERENCE_MODES: { id: string; name: string }[] = [
+  { id: 'CALL', name: 'Call' },
+  { id: 'EMAIL', name: 'Email' },
+  { id: 'WRITTEN', name: 'Written' },
+  { id: 'IN_PERSON', name: 'In-person' },
+];
+
 export const NewCasePage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -27,11 +40,23 @@ export const NewCasePage = () => {
   // Case
   const [purpose, setPurpose] = useState('');
   const [meetingDate, setMeetingDate] = useState('');
+  const [referringOfficer, setReferringOfficer] = useState('');
+  const [referenceMode, setReferenceMode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [createdCaseId, setCreatedCaseId] = useState<string | null>(null);
 
+  // Minister Meeting Workflow: referring officers & reference modes
+  const [referringOfficers, setReferringOfficers] = useState<{ id: string; name: string }[]>(DEFAULT_REFERRING_OFFICERS);
+  const [referenceModes, setReferenceModes] = useState<{ id: string; name: string }[]>(DEFAULT_REFERENCE_MODES);
+
   useEffect(() => {
     api.get('/states').then(res => setStates(res.data)).catch(console.error);
+    api.get('/referring-officers')
+      .then(res => setReferringOfficers(Array.isArray(res.data) ? res.data : DEFAULT_REFERRING_OFFICERS))
+      .catch(() => setReferringOfficers(DEFAULT_REFERRING_OFFICERS));
+    api.get('/reference-modes')
+      .then(res => setReferenceModes(Array.isArray(res.data) ? res.data : DEFAULT_REFERENCE_MODES))
+      .catch(() => setReferenceModes(DEFAULT_REFERENCE_MODES));
   }, []);
 
   const fetchDistricts = useCallback(async () => {
@@ -93,12 +118,22 @@ export const NewCasePage = () => {
       setFormError('Purpose must be at least 10 characters.');
       return;
     }
+    if (!referringOfficer) {
+      setFormError('Referring officer is required.');
+      return;
+    }
+    if (!referenceMode) {
+      setFormError('Mode of reference is required.');
+      return;
+    }
     try {
       setSubmitting(true);
       const res = await api.post('/cases', {
         citizenId: citizen.id,
         purpose: purpose.trim(),
         meetingDate: meetingDate || undefined,
+        referringOfficer,
+        referenceMode,
       });
       setCreatedCaseId(res.data.caseId);
       setStep(3);
@@ -251,6 +286,34 @@ export const NewCasePage = () => {
               {formError}
             </div>
           )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Referring Officer *</label>
+              <select
+                className="select-dark w-full"
+                value={referringOfficer}
+                onChange={e => setReferringOfficer(e.target.value)}
+              >
+                <option value="">Select referring officer...</option>
+                {referringOfficers.map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Mode of Reference *</label>
+              <select
+                className="select-dark w-full"
+                value={referenceMode}
+                onChange={e => setReferenceMode(e.target.value)}
+              >
+                <option value="">Select mode...</option>
+                {referenceModes.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div>
             <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Purpose of Visit *</label>
             <textarea
@@ -280,7 +343,7 @@ export const NewCasePage = () => {
             <button
               type="button"
               onClick={(e) => createCase(e)}
-              disabled={!purpose.trim() || purpose.trim().length < 10 || submitting}
+              disabled={!purpose.trim() || purpose.trim().length < 10 || !referringOfficer || !referenceMode || submitting}
               className="btn-primary inline-flex items-center gap-2"
             >
               {submitting ? 'Submitting...' : 'Submit Case'}
@@ -305,7 +368,7 @@ export const NewCasePage = () => {
             <p className="text-2xl font-bold font-mono text-primary-400">{createdCaseId}</p>
           </div>
           <div className="flex justify-center gap-3 pt-4">
-            <button onClick={() => { setStep(1); setCitizen(null); setPurpose(''); setMeetingDate(''); setCreatedCaseId(null); setName(''); setPhone(''); }} className="btn-ghost">
+            <button onClick={() => { setStep(1); setCitizen(null); setPurpose(''); setMeetingDate(''); setReferringOfficer(''); setReferenceMode(''); setCreatedCaseId(null); setName(''); setPhone(''); }} className="btn-ghost">
               Create Another
             </button>
             <button onClick={() => navigate('/cases')} className="btn-primary">

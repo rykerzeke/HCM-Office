@@ -1,17 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import { createCaseSchema } from '../utils/validation';
+import { createCaseSchema, approveRejectSchema, scheduleMeetingSchema, visitCheckInSchema, closeMeetingSchema } from '../utils/validation';
 import { generateCaseId } from '../utils/caseId';
 import { logAudit } from '../services/audit';
 
 const prisma = new PrismaClient();
 
+const auth = [async (request: any, reply: any) => {
+  try { await request.jwtVerify(); } catch (err) { reply.send(err); }
+}];
+
 export default async function caseRoutes(fastify: FastifyInstance) {
-  fastify.post('/cases', {
-    preValidation: [async (request, reply) => {
-      try { await request.jwtVerify() } catch (err) { reply.send(err) }
-    }]
-  }, async (request, reply) => {
+  // 1. Request submission – require referring officer & reference mode
+  fastify.post('/cases', { preValidation: auth }, async (request, reply) => {
     try {
       const data = createCaseSchema.parse(request.body);
       const user = (request.user as any);
@@ -24,8 +25,11 @@ export default async function caseRoutes(fastify: FastifyInstance) {
           citizenId: data.citizenId,
           purpose: data.purpose,
           meetingDate: data.meetingDate ? new Date(data.meetingDate) : null,
-          status: 'PENDING',
+          status: 'PENDING_APPROVAL',
           priority: 'MEDIUM',
+          referringOfficer: data.referringOfficer,
+          referenceMode: data.referenceMode,
+          supportingNotePath: data.supportingNotePath || undefined,
         }
       });
 
@@ -90,6 +94,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
       where: { id },
       include: {
         citizen: true,
+        approvedBy: true,
         stakeholders: { include: { official: true } },
         assignments: { include: { user: true } },
         comments: { include: { user: true }, orderBy: { createdAt: 'desc' } },
@@ -101,5 +106,123 @@ export default async function caseRoutes(fastify: FastifyInstance) {
     if (!caseDetails) return reply.status(404).send({ error: 'Case not found' });
     
     return reply.send(caseDetails);
+  });
+
+  // 2. Authorization: Approve / Reject / Request Clarification
+  fastify.patch('/cases/:id/authorize', { preValidation: auth }, async (request, reply) => {
+    try {
+      const { id } = request.params as any;
+      const body = approveRejectSchema.parse(request.body);
+      const user = (request.user as any);
+
+      const c = await prisma.case.findUnique({ where: { id } });
+      if (!c) return reply.status(404).send({ error: 'Case not found' });
+      if (c.status !== 'PENDING_APPROVAL' && c.status !== 'ON_HOLD')
+        return reply.status(400).send({ error: 'Case is not pending approval' });
+
+      const status = body.action === 'APPROVE' ? 'APPROVED'
+        : body.action === 'REJECT' ? 'REJECTED'
+        : 'ON_HOLD';
+
+      const updated = await prisma.case.update({
+        where: { id },
+        data: {
+          status,
+          rejectionReason: body.action === 'REJECT' ? (body.rejectionReason || 'No reason provided') : undefined,
+          approvedAt: body.action === 'APPROVE' ? new Date() : undefined,
+          approvedByUserId: body.action === 'APPROVE' ? user.id : undefined,
+        }
+      });
+      await logAudit(`CASE_${body.action}`, { status }, id, user.id);
+      return reply.send(updated);
+    } catch (err: any) {
+      return reply.status(400).send({ error: 'Validation failed', details: err.errors || err.message });
+    }
+  });
+
+  // 3. Scheduling: set date, time, type, venue/link (today or future only; double-booking check can be added)
+  fastify.patch('/cases/:id/schedule', { preValidation: auth }, async (request, reply) => {
+    try {
+      const { id } = request.params as any;
+      const data = scheduleMeetingSchema.parse(request.body);
+      const user = (request.user as any);
+
+      const c = await prisma.case.findUnique({ where: { id } });
+      if (!c) return reply.status(404).send({ error: 'Case not found' });
+      if (c.status !== 'APPROVED')
+        return reply.status(400).send({ error: 'Only approved requests can be scheduled' });
+
+      const scheduledDate = new Date(data.scheduledDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (scheduledDate < today)
+        return reply.status(400).send({ error: 'Past dates are not allowed' });
+
+      const updated = await prisma.case.update({
+        where: { id },
+        data: {
+          status: 'SCHEDULED',
+          scheduledDate,
+          scheduledTimeSlot: data.scheduledTimeSlot,
+          meetingType: data.meetingType,
+          venueOrLink: data.venueOrLink || undefined,
+        }
+      });
+      await logAudit('CASE_SCHEDULED', { scheduledDate: data.scheduledDate, scheduledTimeSlot: data.scheduledTimeSlot }, id, user.id);
+      return reply.send(updated);
+    } catch (err: any) {
+      return reply.status(400).send({ error: 'Validation failed', details: err.errors || err.message });
+    }
+  });
+
+  // 5. Visit day check-in: Arrived / No-show / Rescheduled
+  fastify.patch('/cases/:id/checkin', { preValidation: auth }, async (request, reply) => {
+    try {
+      const { id } = request.params as any;
+      const body = visitCheckInSchema.parse(request.body);
+      const user = (request.user as any);
+
+      const c = await prisma.case.findUnique({ where: { id } });
+      if (!c) return reply.status(404).send({ error: 'Case not found' });
+      if (c.status !== 'SCHEDULED')
+        return reply.status(400).send({ error: 'Only scheduled meetings can be checked in' });
+
+      const updated = await prisma.case.update({
+        where: { id },
+        data: {
+          visitCheckIn: body.checkIn,
+          status: body.checkIn === 'NO_SHOW' ? 'NO_SHOW' : body.checkIn === 'RESCHEDULED' ? 'RESCHEDULED' : c.status,
+        }
+      });
+      await logAudit('CASE_CHECKIN', { checkIn: body.checkIn }, id, user.id);
+      return reply.send(updated);
+    } catch (err: any) {
+      return reply.status(400).send({ error: 'Validation failed', details: err.errors || err.message });
+    }
+  });
+
+  // 6. Post-meeting closure
+  fastify.patch('/cases/:id/close', { preValidation: auth }, async (request, reply) => {
+    try {
+      const { id } = request.params as any;
+      const data = closeMeetingSchema.parse(request.body);
+      const user = (request.user as any);
+
+      const c = await prisma.case.findUnique({ where: { id } });
+      if (!c) return reply.status(404).send({ error: 'Case not found' });
+
+      const updated = await prisma.case.update({
+        where: { id },
+        data: {
+          status: 'CLOSED',
+          closureStatus: data.closureStatus,
+          closureNotes: data.closureNotes || undefined,
+        }
+      });
+      await logAudit('CASE_CLOSED', { closureStatus: data.closureStatus, notes: data.closureNotes }, id, user.id);
+      return reply.send(updated);
+    } catch (err: any) {
+      return reply.status(400).send({ error: 'Validation failed', details: err.errors || err.message });
+    }
   });
 }

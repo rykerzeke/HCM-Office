@@ -3,7 +3,29 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Minister Meeting Workflow: fixed referring officers
+const REFERRING_OFFICERS = [
+  { id: 'VISHAL_GUPTA', name: 'Vishal Gupta' },
+  { id: 'MAHENDRA_PRATAP_SINGH', name: 'Mahendra Pratap Singh' },
+  { id: 'CHIRAG_PANCHAL', name: 'Chirag Panchal' },
+];
+
+const REFERENCE_MODES = [
+  { id: 'CALL', name: 'Call' },
+  { id: 'EMAIL', name: 'Email' },
+  { id: 'WRITTEN', name: 'Written' },
+  { id: 'IN_PERSON', name: 'In-person' },
+];
+
 export default async function referenceRoutes(fastify: FastifyInstance) {
+  fastify.get('/referring-officers', async (_request, reply) => {
+    return reply.send(REFERRING_OFFICERS);
+  });
+
+  fastify.get('/reference-modes', async (_request, reply) => {
+    return reply.send(REFERENCE_MODES);
+  });
+
   fastify.get('/states', async (request, reply) => {
     const states = await prisma.state.findMany({ orderBy: { name: 'asc' } });
     return reply.send(states);

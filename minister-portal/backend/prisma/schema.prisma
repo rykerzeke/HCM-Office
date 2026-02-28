@@ -22,9 +22,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  assignments Assignment[]
-  comments    Comment[]
-  auditLogs   AuditLog[]
+  assignments    Assignment[]
+  comments       Comment[]
+  auditLogs      AuditLog[]
+  casesApproved  Case[]       @relation("ApprovedBy")
 }
 
 model Citizen {
@@ -50,13 +51,49 @@ enum Priority {
   URGENT
 }
 
+// Minister Meeting Workflow statuses
 enum CaseStatus {
+  PENDING_APPROVAL   // 1. Request submitted
+  APPROVED           // 2. Authorized for scheduling
+  REJECTED
+  ON_HOLD            // Clarification requested
+  SCHEDULED          // 3. Date/time assigned
+  COMPLETED          // 5/6. Meeting done
+  CLOSED             // 6. Post-meeting closed
+  NO_SHOW
+  RESCHEDULED
+  FOLLOW_UP_REQUIRED
+  RESCHEDULE_REQUIRED
+  // Legacy (keep for migration)
   PENDING
   IN_PROGRESS
   ESCALATED
-  COMPLETED
   RESOLVED
   ARCHIVED
+}
+
+enum ReferringOfficer {
+  VISHAL_GUPTA
+  MAHENDRA_PRATAP_SINGH
+  CHIRAG_PANCHAL
+}
+
+enum ReferenceMode {
+  CALL
+  EMAIL
+  WRITTEN
+  IN_PERSON
+}
+
+enum MeetingType {
+  IN_PERSON
+  VIRTUAL
+}
+
+enum VisitCheckIn {
+  ARRIVED
+  NO_SHOW
+  RESCHEDULED
 }
 
 model Case {
@@ -64,11 +101,35 @@ model Case {
   caseId         String    @unique // Sequential MO-2026-00001
   citizenId      String
   purpose        String
-  meetingDate    DateTime?
-  status         CaseStatus @default(PENDING)
+  meetingDate    DateTime? // Legacy / preferred date
+  status         CaseStatus @default(PENDING_APPROVAL)
   priority       Priority   @default(MEDIUM)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+
+  // 1. Request submission
+  referringOfficer   ReferringOfficer?
+  referenceMode      ReferenceMode?
+  supportingNotePath String?
+
+  // 2. Authorization
+  rejectionReason    String?
+  approvedAt         DateTime?
+  approvedByUserId   String?
+  approvedBy         User?       @relation("ApprovedBy", fields: [approvedByUserId], references: [id])
+
+  // 3. Scheduling
+  scheduledDate       DateTime?  // Date of meeting
+  scheduledTimeSlot   String?    // e.g. "10:00-10:30"
+  meetingType        MeetingType?
+  venueOrLink        String?
+
+  // 5. Visit day check-in
+  visitCheckIn       VisitCheckIn?
+
+  // 6. Post-meeting closure
+  closureStatus      String?   // COMPLETED | FOLLOW_UP_REQUIRED | RESCHEDULE_REQUIRED
+  closureNotes       String?
 
   citizen        Citizen    @relation(fields: [citizenId], references: [id])
   stakeholders   StakeholderMapping[]

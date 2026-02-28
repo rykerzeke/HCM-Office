@@ -3,10 +3,22 @@ interface BadgeProps {
 }
 
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+  // Minister Meeting Workflow
+  PENDING_APPROVAL: { label: 'Pending Approval', bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
+  APPROVED: { label: 'Approved', bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+  REJECTED: { label: 'Rejected', bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
+  ON_HOLD: { label: 'On Hold', bg: 'bg-orange-500/10', text: 'text-orange-400', dot: 'bg-orange-400' },
+  SCHEDULED: { label: 'Scheduled', bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400' },
+  COMPLETED: { label: 'Completed', bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+  CLOSED: { label: 'Closed', bg: 'bg-teal-500/10', text: 'text-teal-400', dot: 'bg-teal-400' },
+  NO_SHOW: { label: 'No Show', bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
+  RESCHEDULED: { label: 'Rescheduled', bg: 'bg-violet-500/10', text: 'text-violet-400', dot: 'bg-violet-400' },
+  FOLLOW_UP_REQUIRED: { label: 'Follow-up Required', bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
+  RESCHEDULE_REQUIRED: { label: 'Reschedule Required', bg: 'bg-orange-500/10', text: 'text-orange-400', dot: 'bg-orange-400' },
+  // Legacy
   PENDING: { label: 'Pending', bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
   IN_PROGRESS: { label: 'In Progress', bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400' },
   ESCALATED: { label: 'Escalated', bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
-  COMPLETED: { label: 'Completed', bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
   RESOLVED: { label: 'Resolved', bg: 'bg-teal-500/10', text: 'text-teal-400', dot: 'bg-teal-400' },
   ARCHIVED: { label: 'Archived', bg: 'bg-surface-500/10', text: 'text-surface-400', dot: 'bg-surface-400' },
 };
