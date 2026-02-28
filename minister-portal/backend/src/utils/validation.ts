@@ -17,7 +17,7 @@ export const createCitizenSchema = z.object({
 export const createCaseSchema = z.object({
   citizenId: z.string().uuid(),
   purpose: z.string().min(10),
-  meetingDate: z.string().datetime().optional()
+  meetingDate: z.string().optional(), // Accepts datetime-local format (YYYY-MM-DDTHH:mm)
 });
 
 export const assignCaseSchema = z.object({

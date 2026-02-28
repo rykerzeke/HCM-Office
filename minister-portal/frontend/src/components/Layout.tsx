@@ -2,27 +2,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useState } from 'react';
-import {
-  LayoutDashboard,
-  FilePlus2,
-  FolderSearch,
-  BarChart3,
-  Globe,
-  LogOut,
-  Menu,
-  X,
-  Shield,
-  ChevronRight,
-  Sun,
-  Moon,
-} from 'lucide-react';
+import { Icons } from './icons';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/cases/new', label: 'New Case', icon: FilePlus2 },
-  { to: '/cases', label: 'Track Cases', icon: FolderSearch },
-  { to: '/reports', label: 'Reports', icon: BarChart3, adminOnly: true },
-  { to: '/track', label: 'Public Tracking', icon: Globe },
+  { to: '/', label: 'Dashboard', icon: Icons.LayoutDashboard },
+  { to: '/cases/new', label: 'New Case', icon: Icons.FilePlus2 },
+  { to: '/cases', label: 'Track Cases', icon: Icons.FolderSearch },
+  { to: '/reports', label: 'Reports', icon: Icons.BarChart3, adminOnly: true },
+  { to: '/track', label: 'Public Tracking', icon: Icons.Globe },
 ];
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -49,7 +36,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Brand */}
         <div className="flex items-center gap-3 px-6 py-6" style={{ borderBottom: '1px solid var(--divider)' }}>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center glow-primary">
-            <Shield className="h-5 w-5 text-white icon-3d" />
+            <Icons.Shield className="h-5 w-5 text-white icon-3d" />
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-wide">MINISTER</h1>
@@ -59,7 +46,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             onClick={() => setSidebarOpen(false)}
             className="ml-auto lg:hidden text-surface-400 hover:text-primary-400 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <Icons.X className="h-5 w-5" />
           </button>
         </div>
 
@@ -84,7 +71,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               >
                 <Icon className={`h-[18px] w-[18px] transition-colors icon-3d ${isActive ? 'text-primary-400' : 'text-surface-500 group-hover:text-primary-400'}`} />
                 <span>{item.label}</span>
-                {isActive && <ChevronRight className="ml-auto h-4 w-4 text-primary-400/60" />}
+                {isActive && <Icons.ChevronRight className="ml-auto h-4 w-4 text-primary-400/60" />}
               </Link>
             );
           })}
@@ -98,7 +85,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl glass-light text-sm font-medium transition-all hover:scale-[1.01]"
           >
             <div className="flex items-center gap-3">
-              {theme === 'dark' ? <Moon className="h-4 w-4 text-primary-400" /> : <Sun className="h-4 w-4 text-amber-400" />}
+              {theme === 'dark' ? <Icons.Moon className="h-4 w-4 text-primary-400" /> : <Icons.Sun className="h-4 w-4 text-amber-400" />}
               <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
             <div className={`w-10 h-5 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-primary-600' : 'bg-amber-400'}`}>
@@ -121,7 +108,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 className="p-2 rounded-lg text-surface-500 hover:text-rose-400 hover:bg-rose-400/10 transition-all"
                 title="Logout"
               >
-                <LogOut className="h-4 w-4" />
+                <Icons.LogOut className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -143,10 +130,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-xl glass transition-colors"
           >
-            <Menu className="h-5 w-5" />
+            <Icons.Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-400 icon-3d" />
+            <Icons.Shield className="h-5 w-5 text-primary-400 icon-3d" />
             <span className="text-sm font-bold">Minister's Office</span>
           </div>
         </header>

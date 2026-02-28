@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Search, Calendar, CheckCircle, Clock, MapPin, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Icons } from '../components/icons';
 import { StatusBadge } from '../components/StatusBadge';
 import { format } from 'date-fns';
 import api from '../services/api';
 
 export const TrackCasePage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [caseData, setCaseData] = useState<any>(null);
   const [error, setError] = useState('');
@@ -39,9 +41,17 @@ export const TrackCasePage = () => {
       <div className="fixed bottom-1/3 right-1/3 w-80 h-80 bg-accent-cyan/5 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="w-full max-w-2xl space-y-8 animate-fade-in relative z-10">
+        <div className="flex items-center gap-4 mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="btn-ghost inline-flex items-center gap-2"
+          >
+            <Icons.ArrowLeft className="h-4 w-4" /> Back
+          </button>
+        </div>
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-cyan/20 to-primary-500/20 border border-accent-cyan/20 mb-5">
-            <Search className="h-7 w-7 text-accent-cyan" />
+            <Icons.Search className="h-7 w-7 text-accent-cyan" />
           </div>
           <h2 className="text-3xl font-bold text-white">Track Your Request</h2>
           <p className="mt-2 text-sm text-surface-400">Enter your Case ID or Phone Number</p>
@@ -50,7 +60,7 @@ export const TrackCasePage = () => {
         <div className="glass rounded-2xl p-6">
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
+              <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
               <input
                 type="text"
                 className="input-dark input-search w-full py-3"
@@ -78,17 +88,17 @@ export const TrackCasePage = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="glass-light rounded-xl p-4">
-                  <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><User className="h-3 w-3" /> Citizen</p>
+                  <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Icons.User className="h-3 w-3" /> Citizen</p>
                   <p className="text-sm text-white font-semibold mt-1">{caseData.citizen?.name}</p>
                 </div>
                 <div className="glass-light rounded-xl p-4">
-                  <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Submitted</p>
+                  <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Icons.Calendar className="h-3 w-3" /> Submitted</p>
                   <p className="text-sm text-white font-semibold mt-1">{format(new Date(caseData.createdAt), 'MMMM do, yyyy')}</p>
                 </div>
               </div>
 
               <div className="glass-light rounded-xl p-4">
-                <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5 mb-2"><MapPin className="h-3 w-3" /> Request Purpose</p>
+                <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5 mb-2"><Icons.MapPin className="h-3 w-3" /> Request Purpose</p>
                 <p className="text-sm text-surface-200 leading-relaxed">{caseData.purpose}</p>
               </div>
 
@@ -100,8 +110,8 @@ export const TrackCasePage = () => {
                     caseData.status === 'COMPLETED' ? 'bg-emerald-500/20' : 'bg-primary-500/20'
                   }`}>
                     {caseData.status === 'COMPLETED'
-                      ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                      : <Clock className="h-3.5 w-3.5 text-primary-400" />
+                      ? <Icons.CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                      : <Icons.Clock className="h-3.5 w-3.5 text-primary-400" />
                     }
                   </span>
                   <div>

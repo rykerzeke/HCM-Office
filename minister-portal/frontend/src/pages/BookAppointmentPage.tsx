@@ -1,22 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import api from '../services/api';
-import {
-  CalendarDays,
-  User,
-  Phone,
-  MapPin,
-  FileText,
-  CheckCircle,
-  Shield,
-  Search,
-  Sun,
-  Moon,
-  Clock,
-  ArrowRight,
-  SendHorizonal,
-} from 'lucide-react';
+import { Icons } from '../components/icons';
 import { StatusBadge } from '../components/StatusBadge';
+import { SearchableStateSelect } from '../components/SearchableStateSelect';
 import { format } from 'date-fns';
 
 export const BookAppointmentPage = () => {
@@ -115,7 +102,7 @@ export const BookAppointmentPage = () => {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center glow-primary">
-              <Shield className="h-5 w-5 text-white" />
+              <Icons.Shield className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-sm font-bold tracking-wide">MINISTER'S OFFICE</h1>
@@ -124,7 +111,7 @@ export const BookAppointmentPage = () => {
           </div>
           <div className="flex items-center gap-3">
             <button onClick={toggleTheme} className="p-2 rounded-xl glass-light transition-all hover:scale-105" title="Toggle theme">
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-primary-400" />}
+              {theme === 'dark' ? <Icons.Sun className="h-4 w-4 text-amber-400" /> : <Icons.Moon className="h-4 w-4 text-primary-400" />}
             </button>
             <a href="/login" className="btn-ghost text-sm">Admin Login</a>
           </div>
@@ -151,7 +138,7 @@ export const BookAppointmentPage = () => {
                 activeView === 'book' ? 'btn-primary' : 'text-surface-400 hover:text-surface-200'
               }`}
             >
-              <CalendarDays className="h-4 w-4 inline mr-2 -mt-0.5" />
+              <Icons.CalendarDays className="h-4 w-4 inline mr-2 -mt-0.5" />
               Book Appointment
             </button>
             <button
@@ -160,7 +147,7 @@ export const BookAppointmentPage = () => {
                 activeView === 'track' ? 'btn-primary' : 'text-surface-400 hover:text-surface-200'
               }`}
             >
-              <Search className="h-4 w-4 inline mr-2 -mt-0.5" />
+              <Icons.Search className="h-4 w-4 inline mr-2 -mt-0.5" />
               Track Status
             </button>
           </div>
@@ -180,13 +167,13 @@ export const BookAppointmentPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <User className="h-3 w-3" /> Full Name *
+                      <Icons.User className="h-3 w-3" /> Full Name *
                     </label>
                     <input className="input-dark w-full" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your full name" required />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Phone className="h-3 w-3" /> Phone Number *
+                      <Icons.Phone className="h-3 w-3" /> Phone Number *
                     </label>
                     <input className="input-dark w-full" value={phone} onChange={e => setPhone(e.target.value)} placeholder="10-digit mobile number" required />
                   </div>
@@ -196,16 +183,18 @@ export const BookAppointmentPage = () => {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <MapPin className="h-3 w-3" /> Address
+                      <Icons.MapPin className="h-3 w-3" /> Address
                     </label>
                     <input className="input-dark w-full" value={address} onChange={e => setAddress(e.target.value)} placeholder="Your full address" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">State</label>
-                    <select className="select-dark w-full" value={stateId} onChange={e => setStateId(e.target.value)}>
-                      <option value="">Select state...</option>
-                      {states.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
+                    <SearchableStateSelect
+                      value={stateId}
+                      onChange={setStateId}
+                      options={states.map((s: any) => ({ id: s.id, name: s.name }))}
+                      placeholder="Select state..."
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">District</label>
@@ -218,7 +207,7 @@ export const BookAppointmentPage = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <FileText className="h-3 w-3" /> Purpose of Visit *
+                    <Icons.FileText className="h-3 w-3" /> Purpose of Visit *
                   </label>
                   <textarea
                     className="input-dark w-full"
@@ -232,13 +221,14 @@ export const BookAppointmentPage = () => {
 
                 <div className="max-w-xs">
                   <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <CalendarDays className="h-3 w-3" /> Preferred Date
+                    <Icons.CalendarDays className="h-3 w-3" /> Preferred Date
                   </label>
                   <input
                     type="datetime-local"
                     className="input-dark w-full"
                     value={preferredDate}
                     onChange={e => setPreferredDate(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
                   />
                 </div>
 
@@ -254,7 +244,7 @@ export const BookAppointmentPage = () => {
                     </>
                   ) : (
                     <>
-                      <SendHorizonal className="h-5 w-5" />
+                      <Icons.SendHorizonal className="h-5 w-5" />
                       Submit Appointment Request
                     </>
                   )}
@@ -269,7 +259,7 @@ export const BookAppointmentPage = () => {
           <div className="max-w-xl mx-auto animate-fade-in">
             <div className="glass rounded-2xl p-10 text-center space-y-6">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-emerald-500/10 glow-emerald">
-                <CheckCircle className="h-10 w-10 text-emerald-400" />
+                <Icons.CheckCircle className="h-10 w-10 text-emerald-400" />
               </div>
               <h3 className="text-xl font-bold">Appointment Request Submitted!</h3>
               <p className="text-sm text-surface-400">{result.message}</p>
@@ -285,7 +275,7 @@ export const BookAppointmentPage = () => {
                   Submit Another
                 </button>
                 <button onClick={() => { setActiveView('track'); setTrackQuery(result.caseId); }} className="btn-primary inline-flex items-center gap-2">
-                  Track Status <ArrowRight className="h-4 w-4" />
+                  Track Status <Icons.ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -295,10 +285,18 @@ export const BookAppointmentPage = () => {
         {/* ── TRACKING ── */}
         {activeView === 'track' && (
           <div className="max-w-3xl mx-auto animate-fade-in space-y-6">
+            <div className="flex justify-start mb-4">
+              <button
+                onClick={() => setActiveView('book')}
+                className="btn-ghost inline-flex items-center gap-2"
+              >
+                <Icons.ArrowLeft className="h-4 w-4" /> Back
+              </button>
+            </div>
             <div className="glass rounded-2xl p-6">
               <form onSubmit={handleTrack} className="flex gap-3">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
+                  <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
                   <input
                     type="text"
                     className="input-dark input-search w-full py-3"
@@ -328,20 +326,20 @@ export const BookAppointmentPage = () => {
                     <div className="p-6 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="glass-light rounded-xl p-4">
-                          <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><User className="h-3 w-3" /> Citizen</p>
+                          <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Icons.User className="h-3 w-3" /> Citizen</p>
                           <p className="text-sm font-semibold mt-1">{c.citizen?.name}</p>
                         </div>
                         <div className="glass-light rounded-xl p-4">
-                          <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Phone className="h-3 w-3" /> Phone</p>
+                          <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Icons.Phone className="h-3 w-3" /> Phone</p>
                           <p className="text-sm font-semibold mt-1">{c.citizen?.phone}</p>
                         </div>
                         <div className="glass-light rounded-xl p-4">
-                          <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Clock className="h-3 w-3" /> Submitted</p>
+                          <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5"><Icons.Clock className="h-3 w-3" /> Submitted</p>
                           <p className="text-sm font-semibold mt-1">{format(new Date(c.createdAt), 'MMM d, yyyy')}</p>
                         </div>
                       </div>
                       <div className="glass-light rounded-xl p-4">
-                        <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5 mb-2"><FileText className="h-3 w-3" /> Purpose</p>
+                        <p className="text-xs text-surface-500 font-medium flex items-center gap-1.5 mb-2"><Icons.FileText className="h-3 w-3" /> Purpose</p>
                         <p className="text-sm leading-relaxed">{c.purpose}</p>
                       </div>
                     </div>

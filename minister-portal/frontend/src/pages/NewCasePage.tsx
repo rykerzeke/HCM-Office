@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Search as SearchIcon, ArrowRight, ArrowLeft, FilePlus2, CheckCircle } from 'lucide-react';
+import { Icons } from '../components/icons';
+import { SearchableStateSelect } from '../components/SearchableStateSelect';
 
 export const NewCasePage = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export const NewCasePage = () => {
   const [states, setStates] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [formError, setFormError] = useState('');
 
   // Case
   const [purpose, setPurpose] = useState('');
@@ -56,25 +58,55 @@ export const NewCasePage = () => {
   };
 
   const createCitizen = async () => {
+    setFormError('');
+    if (!name.trim() || !phone.trim()) {
+      setFormError('Name and phone are required.');
+      return;
+    }
+    if (phone.length < 10) {
+      setFormError('Phone must be at least 10 digits.');
+      return;
+    }
     try {
       const res = await api.post('/citizens', {
-        name, phone, aadhaar: aadhaar || undefined, address, stateId: stateId || undefined, districtId: districtId || undefined
+        name: name.trim(), phone: phone.trim(), aadhaar: aadhaar || undefined, address: address || undefined, stateId: stateId || undefined, districtId: districtId || undefined
       });
       setCitizen(res.data);
       setStep(2);
-    } catch (err) { console.error(err); }
+    } catch (err: any) {
+      setFormError(err.response?.data?.error || 'Failed to register citizen. Please try again.');
+    }
   };
 
-  const createCase = async () => {
-    if (!citizen?.id || !purpose) return;
+  const createCase = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setFormError('');
+    if (!citizen?.id) {
+      setFormError('Please select or register a citizen first.');
+      return;
+    }
+    if (!purpose.trim()) {
+      setFormError('Purpose of visit is required.');
+      return;
+    }
+    if (purpose.trim().length < 10) {
+      setFormError('Purpose must be at least 10 characters.');
+      return;
+    }
     try {
       setSubmitting(true);
       const res = await api.post('/cases', {
-        citizenId: citizen.id, purpose, meetingDate: meetingDate || undefined
+        citizenId: citizen.id,
+        purpose: purpose.trim(),
+        meetingDate: meetingDate || undefined,
       });
       setCreatedCaseId(res.data.caseId);
       setStep(3);
-    } catch (err) { console.error(err); } finally { setSubmitting(false); }
+    } catch (err: any) {
+      setFormError(err.response?.data?.error || err.response?.data?.details || 'Failed to submit case. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -91,7 +123,7 @@ export const NewCasePage = () => {
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${
               s <= step ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white glow-primary' : 'glass-light text-surface-500'
             }`}>
-              {s < step ? <CheckCircle className="h-4 w-4" /> : s}
+              {s < step ? <Icons.CheckCircle className="h-4 w-4" /> : s}
             </div>
             <span className={`text-xs font-medium hidden sm:block ${s <= step ? 'text-white' : 'text-surface-600'}`}>
               {s === 1 ? 'Citizen' : s === 2 ? 'Details' : 'Done'}
@@ -107,11 +139,11 @@ export const NewCasePage = () => {
           {/* Search existing */}
           <div>
             <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-              <SearchIcon className="h-4 w-4 text-primary-400" /> Search Existing Citizen
+              <Icons.Search className="h-4 w-4 text-primary-400" /> Search Existing Citizen
             </h3>
             <div className="flex gap-3">
               <div className="flex-1 relative">
-                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
+                <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500 icon-3d" />
                 <input
                   type="text"
                   className="input-dark input-search w-full"
@@ -148,8 +180,13 @@ export const NewCasePage = () => {
           {/* New Citizen Form */}
           <div className="space-y-5">
             <h3 className="text-base font-semibold text-white flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-primary-400" /> Register New Citizen
+              <Icons.UserPlus className="h-4 w-4 text-primary-400" /> Register New Citizen
             </h3>
+            {formError && step === 1 && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
+                {formError}
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Full Name *</label>
@@ -169,10 +206,12 @@ export const NewCasePage = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">State</label>
-                <select className="select-dark w-full" value={stateId} onChange={e => setStateId(e.target.value)}>
-                  <option value="">Select state...</option>
-                  {states.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <SearchableStateSelect
+                  value={stateId}
+                  onChange={setStateId}
+                  options={states.map((s: any) => ({ id: s.id, name: s.name }))}
+                  placeholder="Select state..."
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">District</label>
@@ -188,7 +227,7 @@ export const NewCasePage = () => {
               disabled={!name || !phone}
               className="btn-primary inline-flex items-center gap-2"
             >
-              Register & Continue <ArrowRight className="h-4 w-4" />
+              Register & Continue <Icons.ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -207,6 +246,11 @@ export const NewCasePage = () => {
             </div>
           </div>
 
+          {formError && step === 2 && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
+              {formError}
+            </div>
+          )}
           <div>
             <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Purpose of Visit *</label>
             <textarea
@@ -214,7 +258,7 @@ export const NewCasePage = () => {
               rows={4}
               value={purpose}
               onChange={e => setPurpose(e.target.value)}
-              placeholder="Describe the citizen's request in detail..."
+              placeholder="Describe the citizen's request in detail (min 10 characters)..."
             />
           </div>
 
@@ -225,20 +269,22 @@ export const NewCasePage = () => {
               className="input-dark w-full"
               value={meetingDate}
               onChange={e => setMeetingDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
             />
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button onClick={() => setStep(1)} className="btn-ghost inline-flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" /> Back
+            <button type="button" onClick={() => setStep(1)} className="btn-ghost inline-flex items-center gap-2">
+              <Icons.ArrowLeft className="h-4 w-4" /> Back
             </button>
             <button
-              onClick={createCase}
-              disabled={!purpose || submitting}
+              type="button"
+              onClick={(e) => createCase(e)}
+              disabled={!purpose.trim() || purpose.trim().length < 10 || submitting}
               className="btn-primary inline-flex items-center gap-2"
             >
               {submitting ? 'Submitting...' : 'Submit Case'}
-              <FilePlus2 className="h-4 w-4" />
+              <Icons.FilePlus2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -248,7 +294,7 @@ export const NewCasePage = () => {
       {step === 3 && (
         <div className="glass rounded-2xl p-12 text-center space-y-6">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-emerald-500/10 glow-emerald">
-            <CheckCircle className="h-10 w-10 text-emerald-400" />
+            <Icons.CheckCircle className="h-10 w-10 text-emerald-400" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Case Created Successfully</h2>

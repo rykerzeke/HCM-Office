@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Shield, Loader2, ArrowRight } from 'lucide-react';
+import { Icons } from '../components/icons';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -46,7 +46,7 @@ export const LoginPage = () => {
         {/* Brand */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 glow-primary mb-5">
-            <Shield className="h-8 w-8 text-white" />
+            <Icons.Shield className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Minister's Office</h1>
           <p className="mt-2 text-surface-400 text-sm">Citizen Request Management Portal</p>
@@ -90,13 +90,13 @@ export const LoginPage = () => {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Icons.Clock className="h-4 w-4 animate-spin" />
                   Authenticating...
                 </>
               ) : (
                 <>
                   Sign In
-                  <ArrowRight className="h-4 w-4" />
+                  <Icons.ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
