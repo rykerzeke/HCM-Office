@@ -20,16 +20,19 @@ export default async function assignmentRoutes(fastify: FastifyInstance) {
         data: {
           caseId,
           userId: data.userId,
-          notes: data.notes
+          notes: data.notes,
+          dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+          status: data.status || 'PENDING',
         },
         include: { user: true }
       });
 
-      // Update case priority if provided
-      await prisma.case.update({
-        where: { id: caseId },
-        data: { priority: data.priority }
-      });
+      if (data.priority) {
+        await prisma.case.update({
+          where: { id: caseId },
+          data: { priority: data.priority }
+        });
+      }
 
       await logAudit('CASE_ASSIGNED', { toUser: assignment.user.name, priority: data.priority }, caseId, user.id);
 
@@ -59,6 +62,37 @@ export default async function assignmentRoutes(fastify: FastifyInstance) {
       return reply.send(updatedCase);
     } catch (err: any) {
       return reply.status(400).send({ error: 'Failed to update status' });
+    }
+  });
+
+  fastify.patch('/cases/:caseId/assignments/:assignmentId', {
+    preValidation: [async (request, reply) => {
+      try { await request.jwtVerify() } catch (err) { reply.send(err) }
+    }]
+  }, async (request, reply) => {
+    try {
+      const { caseId, assignmentId } = request.params as any;
+      const body = request.body as any;
+      const user = (request.user as any);
+
+      const assignment = await prisma.assignment.findFirst({
+        where: { id: assignmentId, caseId }
+      });
+      if (!assignment) return reply.status(404).send({ error: 'Assignment not found' });
+
+      const updated = await prisma.assignment.update({
+        where: { id: assignmentId },
+        data: {
+          ...(body.dueDate != null && { dueDate: new Date(body.dueDate) }),
+          ...(body.status != null && { status: body.status }),
+          ...(body.notes != null && { notes: body.notes }),
+        },
+        include: { user: true }
+      });
+      await logAudit('ASSIGNMENT_UPDATED', { assignmentId, updates: body }, caseId, user.id);
+      return reply.send(updated);
+    } catch (err: any) {
+      return reply.status(400).send({ error: 'Failed to update assignment' });
     }
   });
 }

@@ -2,9 +2,22 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Download, BarChart3, Users } from 'lucide-react';
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export const ReportsPage = () => {
   const [reports, setReports] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   useEffect(() => {
     api.get('/reports')
@@ -12,6 +25,32 @@ export const ReportsPage = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const handleExportPdf = async () => {
+    try {
+      setExportingPdf(true);
+      const res = await api.get('/reports/pdf', { responseType: 'blob' });
+      downloadBlob(res.data, 'minister-portal-report.pdf');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setExportingExcel(true);
+      const res = await api.get('/reports/excel', { responseType: 'blob' });
+      downloadBlob(res.data, 'minister-portal-report.xlsx');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export Excel. Please try again.');
+    } finally {
+      setExportingExcel(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -33,11 +72,39 @@ export const ReportsPage = () => {
           <p className="text-sm text-surface-400 mt-1">Insights on case resolution and workload</p>
         </div>
         <div className="flex gap-3">
-          <button className="btn-ghost inline-flex items-center gap-2">
-            <Download className="h-4 w-4" /> Export PDF
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={exportingPdf}
+            className="btn-ghost inline-flex items-center gap-2"
+          >
+            {exportingPdf ? (
+              <>
+                <span className="w-4 h-4 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+                Exporting…
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" /> Export PDF
+              </>
+            )}
           </button>
-          <button className="btn-primary inline-flex items-center gap-2">
-            <Download className="h-4 w-4" /> Export Excel
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            disabled={exportingExcel}
+            className="btn-primary inline-flex items-center gap-2"
+          >
+            {exportingExcel ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Exporting…
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" /> Export Excel
+              </>
+            )}
           </button>
         </div>
       </div>

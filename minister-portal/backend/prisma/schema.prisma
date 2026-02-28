@@ -22,10 +22,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  assignments    Assignment[]
-  comments       Comment[]
-  auditLogs      AuditLog[]
-  casesApproved  Case[]       @relation("ApprovedBy")
+  assignments       Assignment[]
+  comments          Comment[]
+  auditLogs         AuditLog[]
+  casesApproved     Case[]       @relation("ApprovedBy")
+  communicationLogs CommunicationLog[]
 }
 
 model Citizen {
@@ -96,6 +97,34 @@ enum VisitCheckIn {
   RESCHEDULED
 }
 
+// Issue/request category (citizen-facing)
+enum RequestCategory {
+  PUBLIC_GRIEVANCE
+  POLICY_REQUEST
+  PERSONAL_ISSUE
+  LAND_AND_REVENUE
+  CIVIC_ISSUE
+  PENSION_AND_WELFARE
+  OTHER
+}
+
+// Assignment/task resolution status
+enum AssignmentStatus {
+  PENDING
+  IN_PROGRESS
+  AWAITING_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+// Communication log type
+enum CommunicationType {
+  CALL
+  LETTER
+  EMAIL
+  MEETING_NOTE
+}
+
 model Case {
   id             String    @id @default(uuid())
   caseId         String    @unique // Sequential MO-2026-00001
@@ -108,9 +137,12 @@ model Case {
   updatedAt      DateTime   @updatedAt
 
   // 1. Request submission
-  referringOfficer   ReferringOfficer?
-  referenceMode      ReferenceMode?
-  supportingNotePath String?
+  category             RequestCategory? @default(OTHER)
+  referringOfficer     ReferringOfficer?
+  referenceMode        ReferenceMode?
+  supportingNotePath  String?
+  resolvedWithoutMeeting Boolean?        // Office chose to resolve without meeting
+  resolutionNotes      String?          // Notes when resolved without meeting
 
   // 2. Authorization
   rejectionReason    String?
@@ -130,13 +162,18 @@ model Case {
   // 6. Post-meeting closure
   closureStatus      String?   // COMPLETED | FOLLOW_UP_REQUIRED | RESCHEDULE_REQUIRED
   closureNotes       String?
+  meetingSummary     String?   // Post-meeting summary
+  actionRequired     String?   // Action required after meeting
+  responsibleAuthorityId String?  // Official id if set
 
   citizen        Citizen    @relation(fields: [citizenId], references: [id])
+  responsibleAuthority Official? @relation("CaseResponsibleAuthority", fields: [responsibleAuthorityId], references: [id])
   stakeholders   StakeholderMapping[]
   assignments    Assignment[]
   comments       Comment[]
   files          File[]
   auditLogs      AuditLog[]
+  communicationLogs CommunicationLog[]
 }
 
 model State {
@@ -171,6 +208,7 @@ model Official {
   district    District? @relation(fields: [districtId], references: [id])
   state       State?    @relation(fields: [stateId], references: [id])
   stakeholders StakeholderMapping[]
+  casesAsResponsible Case[] @relation("CaseResponsibleAuthority")
 }
 
 model StakeholderMapping {
@@ -184,12 +222,27 @@ model StakeholderMapping {
 }
 
 model Assignment {
-  id        String   @id @default(uuid())
+  id          String            @id @default(uuid())
+  caseId      String
+  userId      String
+  notes       String?
+  dueDate     DateTime?
+  status      AssignmentStatus  @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  case      Case     @relation(fields: [caseId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model CommunicationLog {
+  id        String            @id @default(uuid())
   caseId    String
   userId    String
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  type      CommunicationType
+  direction String?           // INBOUND / OUTBOUND
+  summary   String?
+  createdAt DateTime          @default(now())
 
   case      Case     @relation(fields: [caseId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
@@ -229,4 +282,13 @@ model AuditLog {
 
   case      Case?    @relation(fields: [caseId], references: [id])
   user      User?    @relation(fields: [userId], references: [id])
+}
+
+// Category → recommended department (for authority suggestion)
+model CategoryDepartment {
+  id                String   @id @default(uuid())
+  category          RequestCategory
+  departmentKeyword String   // e.g. "Municipal", "Social Welfare", "Revenue"
+  description       String?
+  createdAt         DateTime @default(now())
 }

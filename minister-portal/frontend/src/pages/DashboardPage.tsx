@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Activity, Clock, Users, CheckCircle, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { Activity, Clock, Users, CheckCircle, TrendingUp, ArrowUpRight, Calendar, AlertCircle, Zap } from 'lucide-react';
+import { format } from 'date-fns';
 
 export const DashboardPage = () => {
   const [stats, setStats] = useState<any>(null);
@@ -32,16 +34,14 @@ export const DashboardPage = () => {
       icon: Activity,
       gradient: 'from-primary-500/20 to-primary-700/10',
       iconColor: 'text-primary-400',
-      glowClass: 'glow-primary',
       borderColor: 'border-primary-500/15',
     },
     {
-      label: 'Pending Tasks',
-      value: stats?.stats?.pendingTasks || 0,
+      label: 'Pending Approval',
+      value: (stats?.stats?.pendingApproval ?? 0) + (stats?.stats?.onHold ?? 0),
       icon: Clock,
       gradient: 'from-amber-500/20 to-amber-700/10',
       iconColor: 'text-amber-400',
-      glowClass: 'glow-amber',
       borderColor: 'border-amber-500/15',
     },
     {
@@ -50,16 +50,22 @@ export const DashboardPage = () => {
       icon: CheckCircle,
       gradient: 'from-emerald-500/20 to-emerald-700/10',
       iconColor: 'text-emerald-400',
-      glowClass: 'glow-emerald',
       borderColor: 'border-emerald-500/15',
     },
     {
-      label: 'Escalations',
-      value: stats?.stats?.escalations || 0,
-      icon: TrendingUp,
+      label: 'Follow-up Required',
+      value: stats?.stats?.followUpRequired || 0,
+      icon: AlertCircle,
+      gradient: 'from-orange-500/20 to-orange-700/10',
+      iconColor: 'text-orange-400',
+      borderColor: 'border-orange-500/15',
+    },
+    {
+      label: 'High Priority',
+      value: stats?.stats?.highPriority || 0,
+      icon: Zap,
       gradient: 'from-rose-500/20 to-rose-700/10',
       iconColor: 'text-rose-400',
-      glowClass: 'glow-rose',
       borderColor: 'border-rose-500/15',
     },
   ];
@@ -74,28 +80,56 @@ export const DashboardPage = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
         {statCards.map((card, i) => {
           const Icon = card.icon;
+          const linkHref = card.label === 'Follow-up Required' && card.value > 0 ? '/cases?status=FOLLOW_UP_REQUIRED' : undefined;
+          const Wrapper = linkHref ? Link : 'div';
+          const wrapperProps = linkHref ? { to: linkHref, className: 'block' } : {};
           return (
-            <div
-              key={i}
-              className={`glass rounded-2xl p-6 ${card.borderColor} hover:scale-[1.02] transition-transform duration-200`}
-            >
-              <div className="flex items-start justify-between">
-                <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
-                  <Icon className={`h-5 w-5 icon-3d ${card.iconColor}`} />
+            <Wrapper key={i} {...wrapperProps}>
+              <div
+                className={`glass rounded-2xl p-6 ${card.borderColor} hover:scale-[1.02] transition-transform duration-200 ${linkHref ? 'cursor-pointer' : ''}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
+                    <Icon className={`h-5 w-5 icon-3d ${card.iconColor}`} />
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-surface-600" />
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-surface-600" />
+                <div className="mt-4">
+                  <p className="text-3xl font-bold text-white">{card.value}</p>
+                  <p className="text-sm text-surface-400 mt-1 font-medium">{card.label}</p>
+                </div>
               </div>
-              <div className="mt-4">
-                <p className="text-3xl font-bold text-white">{card.value}</p>
-                <p className="text-sm text-surface-400 mt-1 font-medium">{card.label}</p>
-              </div>
-            </div>
+            </Wrapper>
           );
         })}
       </div>
+
+      {/* Upcoming Meetings */}
+      {stats?.upcomingMeetings?.length > 0 && (
+        <div className="glass rounded-2xl overflow-hidden">
+          <div className="px-6 py-5 border-b border-white/5 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-primary-400 icon-3d" />
+            <h3 className="text-base font-semibold text-white">Upcoming Meetings</h3>
+          </div>
+          <div className="divide-y divide-white/5">
+            {stats.upcomingMeetings.map((c: any) => (
+              <Link key={c.id} to={`/cases/${c.id}`} className="flex items-center justify-between px-6 py-4 hover:bg-white/[0.02] transition-colors">
+                <div>
+                  <p className="text-sm font-semibold text-white">{c.caseId}</p>
+                  <p className="text-xs text-surface-400">{c.citizen?.name} · {c.citizen?.phone}</p>
+                </div>
+                <span className="text-xs text-primary-400 font-medium">
+                  {c.scheduledDate && format(new Date(c.scheduledDate), 'MMM d, yyyy')}
+                  {c.scheduledTimeSlot && ` · ${c.scheduledTimeSlot}`}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="glass rounded-2xl overflow-hidden">

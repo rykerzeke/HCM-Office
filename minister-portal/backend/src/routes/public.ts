@@ -7,6 +7,10 @@ import { logAudit } from '../services/audit';
 
 const prisma = new PrismaClient();
 
+const requestCategoryEnum = z.enum([
+  'PUBLIC_GRIEVANCE', 'POLICY_REQUEST', 'PERSONAL_ISSUE', 'LAND_AND_REVENUE',
+  'CIVIC_ISSUE', 'PENSION_AND_WELFARE', 'OTHER'
+]);
 const publicBookingSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   phone: z.string().min(10).max(15),
@@ -16,6 +20,8 @@ const publicBookingSchema = z.object({
   districtId: z.string().optional(),
   purpose: z.string().min(10, 'Please describe your request in detail'),
   preferredDate: z.string().optional(),
+  category: requestCategoryEnum.optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
 });
 
 export default async function publicRoutes(fastify: FastifyInstance) {
@@ -63,7 +69,8 @@ export default async function publicRoutes(fastify: FastifyInstance) {
           purpose: data.purpose,
           meetingDate: data.preferredDate ? new Date(data.preferredDate) : null,
           status: 'PENDING_APPROVAL',
-          priority: 'MEDIUM',
+          priority: data.priority ?? 'MEDIUM',
+          category: data.category ?? undefined,
         }
       });
 

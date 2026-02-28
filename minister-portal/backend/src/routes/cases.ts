@@ -26,7 +26,8 @@ export default async function caseRoutes(fastify: FastifyInstance) {
           purpose: data.purpose,
           meetingDate: data.meetingDate ? new Date(data.meetingDate) : null,
           status: 'PENDING_APPROVAL',
-          priority: 'MEDIUM',
+          priority: data.priority || 'MEDIUM',
+          category: data.category || undefined,
           referringOfficer: data.referringOfficer,
           referenceMode: data.referenceMode,
           supportingNotePath: data.supportingNotePath || undefined,
@@ -47,7 +48,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
     }]
   }, async (request, reply) => {
     // Pagination & Search
-    const { page = 1, limit = 10, search, status, priority } = request.query as any;
+    const { page = 1, limit = 10, search, status, priority, category } = request.query as any;
     
     const skip = (Number(page) - 1) * Number(limit);
     
@@ -61,6 +62,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
     }
     if (status) whereClause.status = status;
     if (priority) whereClause.priority = priority;
+    if (category) whereClause.category = category;
 
     const [cases, total] = await Promise.all([
       prisma.case.findMany({
@@ -95,10 +97,12 @@ export default async function caseRoutes(fastify: FastifyInstance) {
       include: {
         citizen: true,
         approvedBy: true,
+        responsibleAuthority: true,
         stakeholders: { include: { official: true } },
         assignments: { include: { user: true } },
         comments: { include: { user: true }, orderBy: { createdAt: 'desc' } },
         files: true,
+        communicationLogs: { include: { user: true }, orderBy: { createdAt: 'desc' } },
         auditLogs: { include: { user: true }, orderBy: { createdAt: 'desc' } }
       }
     });
@@ -122,6 +126,7 @@ export default async function caseRoutes(fastify: FastifyInstance) {
 
       const status = body.action === 'APPROVE' ? 'APPROVED'
         : body.action === 'REJECT' ? 'REJECTED'
+        : body.action === 'RESOLVE_WITHOUT_MEETING' ? 'CLOSED'
         : 'ON_HOLD';
 
       const updated = await prisma.case.update({
@@ -131,6 +136,8 @@ export default async function caseRoutes(fastify: FastifyInstance) {
           rejectionReason: body.action === 'REJECT' ? (body.rejectionReason || 'No reason provided') : undefined,
           approvedAt: body.action === 'APPROVE' ? new Date() : undefined,
           approvedByUserId: body.action === 'APPROVE' ? user.id : undefined,
+          resolvedWithoutMeeting: body.action === 'RESOLVE_WITHOUT_MEETING' ? true : undefined,
+          resolutionNotes: body.action === 'RESOLVE_WITHOUT_MEETING' ? (body.resolutionNotes || '') : undefined,
         }
       });
       await logAudit(`CASE_${body.action}`, { status }, id, user.id);
@@ -223,6 +230,9 @@ export default async function caseRoutes(fastify: FastifyInstance) {
           status: 'CLOSED',
           closureStatus: data.closureStatus,
           closureNotes: data.closureNotes || undefined,
+          meetingSummary: data.meetingSummary || undefined,
+          actionRequired: data.actionRequired || undefined,
+          responsibleAuthorityId: data.responsibleAuthorityId || undefined,
         }
       });
       await logAudit('CASE_CLOSED', { closureStatus: data.closureStatus, notes: data.closureNotes }, id, user.id);

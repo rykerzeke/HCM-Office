@@ -18,6 +18,8 @@ export const BookAppointmentPage = () => {
   const [districtId, setDistrictId] = useState('');
   const [purpose, setPurpose] = useState('');
   const [preferredDate, setPreferredDate] = useState('');
+  const [category, setCategory] = useState('');
+  const [priority, setPriority] = useState('MEDIUM');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
@@ -58,6 +60,8 @@ export const BookAppointmentPage = () => {
         address, stateId: stateId || undefined,
         districtId: districtId || undefined,
         purpose, preferredDate: preferredDate || undefined,
+        category: category || undefined,
+        priority: priority || undefined,
       });
       setResult(res.data);
     } catch (err: any) {
@@ -86,8 +90,26 @@ export const BookAppointmentPage = () => {
   const resetForm = () => {
     setName(''); setPhone(''); setAadhaar(''); setAddress('');
     setStateId(''); setDistrictId(''); setPurpose('');
-    setPreferredDate(''); setResult(null); setError('');
+    setPreferredDate(''); setCategory(''); setPriority('MEDIUM');
+    setResult(null); setError('');
   };
+
+  const REQUEST_CATEGORIES = [
+    { value: '', label: 'Select category (optional)' },
+    { value: 'PUBLIC_GRIEVANCE', label: 'Public Grievance' },
+    { value: 'POLICY_REQUEST', label: 'Policy Request' },
+    { value: 'PERSONAL_ISSUE', label: 'Personal Issue' },
+    { value: 'LAND_AND_REVENUE', label: 'Land & Revenue' },
+    { value: 'CIVIC_ISSUE', label: 'Civic Issue' },
+    { value: 'PENSION_AND_WELFARE', label: 'Pension & Welfare' },
+    { value: 'OTHER', label: 'Other' },
+  ];
+  const PRIORITIES = [
+    { value: 'LOW', label: 'Low' },
+    { value: 'MEDIUM', label: 'Medium' },
+    { value: 'HIGH', label: 'High' },
+    { value: 'URGENT', label: 'Urgent' },
+  ];
 
   return (
     <div className="min-h-screen relative">
@@ -201,6 +223,21 @@ export const BookAppointmentPage = () => {
                     <select className="select-dark w-full" value={districtId} onChange={e => setDistrictId(e.target.value)} disabled={!stateId}>
                       <option value="">Select district...</option>
                       {districts.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Category (Optional)</label>
+                    <select className="select-dark w-full" value={category} onChange={e => setCategory(e.target.value)}>
+                      {REQUEST_CATEGORIES.map((c) => <option key={c.value || 'none'} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Urgency</label>
+                    <select className="select-dark w-full" value={priority} onChange={e => setPriority(e.target.value)}>
+                      {PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
                   </div>
                 </div>

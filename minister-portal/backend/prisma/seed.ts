@@ -1,10 +1,11 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, RequestCategory } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   // Clear existing
+  await prisma.communicationLog.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.assignment.deleteMany();
@@ -14,6 +15,7 @@ async function main() {
   await prisma.official.deleteMany();
   await prisma.district.deleteMany();
   await prisma.state.deleteMany();
+  await prisma.categoryDepartment.deleteMany();
   await prisma.user.deleteMany();
 
   // Create Users
@@ -39,6 +41,21 @@ async function main() {
   
   for (const s of states) {
     stateRecords.push(await prisma.state.create({ data: { name: s } }));
+  }
+
+  // Category → department mapping (for suggested authority)
+  const categoryDepts = [
+    { category: RequestCategory.CIVIC_ISSUE, departmentKeyword: 'Municipal', description: 'Roads, sanitation, civic' },
+    { category: RequestCategory.PENSION_AND_WELFARE, departmentKeyword: 'Social Welfare', description: 'Pension, welfare' },
+    { category: RequestCategory.LAND_AND_REVENUE, departmentKeyword: 'Revenue', description: 'Land, revenue' },
+    { category: RequestCategory.LAND_AND_REVENUE, departmentKeyword: 'District Magistrate', description: 'DM office' },
+    { category: RequestCategory.PUBLIC_GRIEVANCE, departmentKeyword: 'General Administration', description: 'General' },
+    { category: RequestCategory.POLICY_REQUEST, departmentKeyword: 'General Administration', description: 'Policy' },
+    { category: RequestCategory.PERSONAL_ISSUE, departmentKeyword: 'General Administration', description: 'Personal' },
+    { category: RequestCategory.OTHER, departmentKeyword: 'General Administration', description: 'Other' },
+  ];
+  for (const cd of categoryDepts) {
+    await prisma.categoryDepartment.create({ data: cd });
   }
 
   // Create Districts - Full lists for major states; key districts for others

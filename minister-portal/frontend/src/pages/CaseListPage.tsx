@@ -1,25 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
 import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Plus, FolderSearch } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const CaseListPage = () => {
+  const [searchParams] = useSearchParams();
   const [cases, setCases] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(() => searchParams.get('status') || '');
   const [priority, setPriority] = useState('');
+  const [category, setCategory] = useState('');
   const [page, setPage] = useState(1);
 
   const fetchCases = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/cases', {
-        params: { search, status, priority, page, limit: 10 }
+        params: { search, status, priority, category, page, limit: 10 }
       });
       setCases(res.data.data);
       setMeta(res.data.meta);
@@ -28,7 +30,7 @@ export const CaseListPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, status, priority, page]);
+  }, [search, status, priority, category, page]);
 
   useEffect(() => {
     fetchCases();
@@ -85,6 +87,8 @@ export const CaseListPage = () => {
             <option value="CLOSED">Closed</option>
             <option value="NO_SHOW">No Show</option>
             <option value="RESCHEDULED">Rescheduled</option>
+            <option value="FOLLOW_UP_REQUIRED">Follow-up required</option>
+            <option value="RESCHEDULE_REQUIRED">Reschedule required</option>
           </select>
 
           <select
@@ -97,6 +101,21 @@ export const CaseListPage = () => {
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>
             <option value="URGENT">Urgent</option>
+          </select>
+
+          <select
+            value={category}
+            onChange={e => { setCategory(e.target.value); setPage(1); }}
+            className="select-dark sm:w-44"
+          >
+            <option value="">All Categories</option>
+            <option value="PUBLIC_GRIEVANCE">Public Grievance</option>
+            <option value="POLICY_REQUEST">Policy Request</option>
+            <option value="PERSONAL_ISSUE">Personal Issue</option>
+            <option value="LAND_AND_REVENUE">Land & Revenue</option>
+            <option value="CIVIC_ISSUE">Civic Issue</option>
+            <option value="PENSION_AND_WELFARE">Pension & Welfare</option>
+            <option value="OTHER">Other</option>
           </select>
 
           <button type="submit" className="btn-ghost inline-flex items-center gap-2">
@@ -115,6 +134,7 @@ export const CaseListPage = () => {
                 <th className="text-left">Case ID</th>
                 <th className="text-left">Citizen</th>
                 <th className="text-left">Purpose</th>
+                <th className="text-left">Category</th>
                 <th className="text-left">Status</th>
                 <th className="text-left">Priority</th>
                 <th className="text-left">Created</th>
@@ -124,7 +144,7 @@ export const CaseListPage = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={8} className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-surface-500">
                       <div className="w-5 h-5 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
                       <span className="text-sm">Loading cases...</span>
@@ -133,7 +153,7 @@ export const CaseListPage = () => {
                 </tr>
               ) : cases.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16">
+                  <td colSpan={8} className="text-center py-16">
                     <FolderSearch className="mx-auto h-10 w-10 text-surface-600 mb-3" />
                     <p className="text-surface-400 font-medium text-sm">No cases found</p>
                     <p className="text-surface-600 text-xs mt-1">Try adjusting your filters</p>
@@ -153,6 +173,15 @@ export const CaseListPage = () => {
                     </td>
                     <td>
                       <p className="text-sm text-surface-300 truncate max-w-xs" title={c.purpose}>{c.purpose}</p>
+                    </td>
+                    <td>
+                      {c.category ? (
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-surface-700 text-surface-300">
+                          {c.category.replace(/_/g, ' ')}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-surface-600">—</span>
+                      )}
                     </td>
                     <td><StatusBadge status={c.status} /></td>
                     <td><PriorityBadge priority={c.priority} /></td>

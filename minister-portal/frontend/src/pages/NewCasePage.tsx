@@ -40,6 +40,8 @@ export const NewCasePage = () => {
   // Case
   const [purpose, setPurpose] = useState('');
   const [meetingDate, setMeetingDate] = useState('');
+  const [category, setCategory] = useState('');
+  const [priority, setPriority] = useState('MEDIUM');
   const [referringOfficer, setReferringOfficer] = useState('');
   const [referenceMode, setReferenceMode] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -132,6 +134,8 @@ export const NewCasePage = () => {
         citizenId: citizen.id,
         purpose: purpose.trim(),
         meetingDate: meetingDate || undefined,
+        category: category || undefined,
+        priority: priority || undefined,
         referringOfficer,
         referenceMode,
       });
@@ -288,6 +292,28 @@ export const NewCasePage = () => {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Category (Optional)</label>
+              <select className="select-dark w-full" value={category} onChange={e => setCategory(e.target.value)}>
+                <option value="">Select category...</option>
+                <option value="PUBLIC_GRIEVANCE">Public Grievance</option>
+                <option value="POLICY_REQUEST">Policy Request</option>
+                <option value="PERSONAL_ISSUE">Personal Issue</option>
+                <option value="LAND_AND_REVENUE">Land & Revenue</option>
+                <option value="CIVIC_ISSUE">Civic Issue</option>
+                <option value="PENSION_AND_WELFARE">Pension & Welfare</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Priority</label>
+              <select className="select-dark w-full" value={priority} onChange={e => setPriority(e.target.value)}>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Referring Officer *</label>
               <select
                 className="select-dark w-full"
@@ -368,7 +394,7 @@ export const NewCasePage = () => {
             <p className="text-2xl font-bold font-mono text-primary-400">{createdCaseId}</p>
           </div>
           <div className="flex justify-center gap-3 pt-4">
-            <button onClick={() => { setStep(1); setCitizen(null); setPurpose(''); setMeetingDate(''); setReferringOfficer(''); setReferenceMode(''); setCreatedCaseId(null); setName(''); setPhone(''); }} className="btn-ghost">
+            <button onClick={() => { setStep(1); setCitizen(null); setPurpose(''); setMeetingDate(''); setCategory(''); setPriority('MEDIUM'); setReferringOfficer(''); setReferenceMode(''); setCreatedCaseId(null); setName(''); setPhone(''); }} className="btn-ghost">
               Create Another
             </button>
             <button onClick={() => navigate('/cases')} className="btn-primary">
