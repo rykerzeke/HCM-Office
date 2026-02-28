@@ -233,11 +233,23 @@ export const NewCasePage = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Phone *</label>
-                <input className="input-dark w-full" value={phone} onChange={e => setPhone(e.target.value)} placeholder="10-digit mobile" />
+                <input 
+                  className="input-dark w-full" 
+                  value={phone} 
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} 
+                  placeholder="10-digit mobile" 
+                  maxLength={10}
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Aadhaar (Optional)</label>
-                <input className="input-dark w-full" value={aadhaar} onChange={e => setAadhaar(e.target.value)} placeholder="12-digit Aadhaar" />
+                <input 
+                  className="input-dark w-full" 
+                  value={aadhaar} 
+                  onChange={e => setAadhaar(e.target.value.replace(/\D/g, '').slice(0, 12))} 
+                  placeholder="12-digit Aadhaar" 
+                  maxLength={12}
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Address</label>
