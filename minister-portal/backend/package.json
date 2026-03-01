@@ -18,22 +18,21 @@
     "@fastify/multipart": "^9.4.0",
     "@fastify/static": "^9.0.0",
     "@prisma/client": "^6.19.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^25.3.1",
+    "@types/pdfkit": "^0.17.5",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
     "exceljs": "^4.4.0",
     "fastify": "^5.7.4",
     "pdfkit": "^0.17.2",
+    "prisma": "^6.19.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "zod": "^4.3.6"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^25.3.1",
-    "@types/pdfkit": "^0.17.5",
-    "prisma": "^6.19.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  }
+  "devDependencies": {}
 }
