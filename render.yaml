@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hcm-portal-backend
+    name: hcm-office
     runtime: node
     region: singapore   # Change to your preferred region: oregon, ohio, frankfurt, singapore
     plan: free
