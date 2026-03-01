@@ -25,8 +25,12 @@ dotenv.config();
 const server = fastify({ logger: true });
 
 // Plugins
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : ['http://localhost:5173'];
+
 server.register(cors, {
-  origin: '*',
+  origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 });
 
@@ -63,8 +67,10 @@ server.get('/health', async () => {
 
 
 
+const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
+
 server.register(fastifyStatic, {
-  root: path.join(__dirname, '../uploads'),
+  root: uploadsDir,
   prefix: '/uploads/',
 });
 
