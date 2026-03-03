@@ -42,10 +42,10 @@ export function handleError(err: unknown, reply: FastifyReply): void {
       });
       return;
     }
+    // Do NOT include err.message — it may contain SQL/query internals
     reply.status(400).send({
       error: 'Database operation failed',
       code: 'DB_ERROR',
-      details: err.message,
     });
     return;
   }

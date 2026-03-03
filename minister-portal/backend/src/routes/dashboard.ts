@@ -3,11 +3,23 @@ import prisma from '../data/prisma';
 import { authenticate } from '../middleware/authenticate';
 import { handleError } from '../utils/errors';
 
+// ---------------------------------------------------------------------------
+// Simple in-memory cache — avoids 8 full-table-scan queries on every page
+// load under concurrent usage. 30-second TTL is short enough to stay fresh.
+// ---------------------------------------------------------------------------
+let statsCache: { data: unknown; expiresAt: number } | null = null;
+const STATS_TTL_MS = 30_000;
+
 export default async function dashboardRoutes(fastify: FastifyInstance) {
   fastify.get('/dashboard/stats', {
     preValidation: [authenticate],
   }, async (_request, reply) => {
     try {
+      // Return cached payload if still fresh
+      if (statsCache && Date.now() < statsCache.expiresAt) {
+        return reply.send(statsCache.data);
+      }
+
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
@@ -44,7 +56,7 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
         }),
       ]);
 
-      return reply.send({
+      const payload = {
         stats: {
           totalRequests,
           pendingTasks: pendingApproval + onHold,
@@ -56,7 +68,12 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
         },
         upcomingMeetings,
         recentUpdates,
-      });
+      };
+
+      // Store in cache
+      statsCache = { data: payload, expiresAt: Date.now() + STATS_TTL_MS };
+
+      return reply.send(payload);
     } catch (err) {
       return handleError(err, reply);
     }

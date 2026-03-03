@@ -62,8 +62,8 @@ export default async function caseRoutes(fastify: FastifyInstance) {
 
       if (search) {
         whereClause.OR = [
-          { caseId: { contains: search } },
-          { citizen: { name: { contains: search } } },
+          { caseId: { contains: search, mode: 'insensitive' } },
+          { citizen: { name: { contains: search, mode: 'insensitive' } } },
           { citizen: { phone: { contains: search } } },
         ];
       }
@@ -245,10 +245,14 @@ export default async function caseRoutes(fastify: FastifyInstance) {
       const c = await prisma.case.findUnique({ where: { id } });
       if (!c) return reply.status(404).send({ error: 'Case not found', code: 'NOT_FOUND' });
 
-      const canClose = c.status === 'SCHEDULED' || c.visitCheckIn != null;
-      if (!canClose) {
+      // Explicit allowlist: only statuses that logically precede closure.
+      // SCHEDULED covers both pre-check-in and post-ARRIVED (which keeps status=SCHEDULED).
+      // NO_SHOW and RESCHEDULED are set by checkin and can be closed/abandoned.
+      // APPROVED covers resolve-without-meeting (admin can close directly after approving).
+      const CLOSEABLE_STATUSES = new Set(['SCHEDULED', 'NO_SHOW', 'RESCHEDULED', 'APPROVED', 'FOLLOW_UP_REQUIRED']);
+      if (!CLOSEABLE_STATUSES.has(c.status)) {
         return reply.status(400).send({
-          error: 'Case can only be closed when scheduled or after check-in',
+          error: `Cannot close a case with status "${c.status}"`,
           code: 'INVALID_STATUS',
         });
       }

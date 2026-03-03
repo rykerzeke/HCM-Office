@@ -1,11 +1,15 @@
 import { FastifyInstance } from 'fastify';
 import { CaseStatus, AssignmentStatus } from '@prisma/client';
+import { z } from 'zod';
 import prisma from '../data/prisma';
-import { assignCaseSchema } from '../utils/validation';
+import { assignCaseSchema, updateAssignmentSchema, manualCaseStatusEnum } from '../utils/validation';
 import { logAudit } from '../services/audit';
 import { authenticate } from '../middleware/authenticate';
+import { requireStaffOrAdmin } from '../middleware/authorize';
 import { handleError } from '../utils/errors';
 import { CaseIdParam, CaseAndAssignmentParam } from '../types/fastify';
+
+const statusBodySchema = z.object({ status: manualCaseStatusEnum });
 
 export default async function assignmentRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/assignments', {
@@ -42,12 +46,16 @@ export default async function assignmentRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Direct status override — restricted to STAFF/ADMIN and only allows safe
+  // intermediate statuses. Terminal transitions (CLOSED, REJECTED) must go
+  // through the dedicated workflow endpoints (authorize / close).
   fastify.patch('/cases/:caseId/status', {
-    preValidation: [authenticate],
+    preValidation: [authenticate, requireStaffOrAdmin],
   }, async (request, reply) => {
     try {
       const { caseId } = request.params as CaseIdParam;
-      const { status } = request.body as { status: string };
+      // Validate against the whitelist — rejects CLOSED/REJECTED/legacy statuses
+      const { status } = statusBodySchema.parse(request.body);
       const user = request.user;
 
       const updatedCase = await prisma.$transaction(async (tx) => {
@@ -67,7 +75,8 @@ export default async function assignmentRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { caseId, assignmentId } = request.params as CaseAndAssignmentParam;
-      const body = request.body as { dueDate?: string; status?: string; notes?: string };
+      // Validated body — rejects unknown keys and invalid status values
+      const body = updateAssignmentSchema.parse(request.body);
       const user = request.user;
 
       const assignment = await prisma.assignment.findFirst({ where: { id: assignmentId, caseId } });

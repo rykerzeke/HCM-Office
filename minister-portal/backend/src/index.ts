@@ -1,5 +1,6 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
 import fastifyJwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
@@ -30,6 +31,11 @@ if (!process.env.JWT_SECRET) {
 }
 
 const server = fastify({ logger: true });
+
+// Security headers — helmet sets X-Content-Type-Options, X-Frame-Options, HSTS, etc.
+// contentSecurityPolicy is disabled here because the API serves JSON only (no HTML);
+// the frontend enforces its own CSP via Vite/Vercel headers.
+server.register(helmet, { contentSecurityPolicy: false });
 
 // CORS
 const corsOrigin = process.env.CORS_ORIGIN
