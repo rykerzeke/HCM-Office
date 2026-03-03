@@ -43,6 +43,9 @@ model Citizen {
   district  District? @relation(fields: [districtId], references: [id])
   state     State?    @relation(fields: [stateId], references: [id])
   cases     Case[]
+
+  @@index([stateId])
+  @@index([districtId])
 }
 
 enum Priority {
@@ -174,6 +177,13 @@ model Case {
   files          File[]
   auditLogs      AuditLog[]
   communicationLogs CommunicationLog[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([citizenId])
+  @@index([category])
+  @@index([createdAt])
+  @@index([scheduledDate])
 }
 
 model State {
@@ -209,6 +219,10 @@ model Official {
   state       State?    @relation(fields: [stateId], references: [id])
   stakeholders StakeholderMapping[]
   casesAsResponsible Case[] @relation("CaseResponsibleAuthority")
+
+  @@index([stateId])
+  @@index([districtId])
+  @@index([department])
 }
 
 model StakeholderMapping {
@@ -233,6 +247,10 @@ model Assignment {
 
   case      Case     @relation(fields: [caseId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+
+  @@index([caseId])
+  @@index([userId])
+  @@index([status])
 }
 
 model CommunicationLog {
@@ -246,6 +264,9 @@ model CommunicationLog {
 
   case      Case     @relation(fields: [caseId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+
+  @@index([caseId])
+  @@index([userId])
 }
 
 model Comment {
@@ -258,6 +279,8 @@ model Comment {
 
   case      Case     @relation(fields: [caseId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+
+  @@index([caseId])
 }
 
 model File {
@@ -270,6 +293,8 @@ model File {
   createdAt DateTime @default(now())
 
   case      Case     @relation(fields: [caseId], references: [id])
+
+  @@index([caseId])
 }
 
 model AuditLog {
@@ -282,6 +307,11 @@ model AuditLog {
 
   case      Case?    @relation(fields: [caseId], references: [id])
   user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([caseId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 // Category → recommended department (for authority suggestion)

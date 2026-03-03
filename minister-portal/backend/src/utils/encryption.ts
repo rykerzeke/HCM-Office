@@ -6,6 +6,10 @@ if (!_key) {
   console.error('FATAL: ENCRYPTION_KEY environment variable is required');
   process.exit(1);
 }
+if (_key.length !== 64) {
+  console.error(`FATAL: ENCRYPTION_KEY must be exactly 64 hex characters (got ${_key.length})`);
+  process.exit(1);
+}
 const ENCRYPTION_KEY: string = _key;
 
 export function encrypt(text: string): string {

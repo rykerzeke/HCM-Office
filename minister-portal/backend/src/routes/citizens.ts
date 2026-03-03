@@ -1,25 +1,23 @@
 import { FastifyInstance } from 'fastify';
 import prisma from '../data/prisma';
 import { createCitizenSchema } from '../utils/validation';
-import { encrypt, decrypt } from '../utils/encryption';
+import { encrypt } from '../utils/encryption';
 import { logAudit } from '../services/audit';
 import { authenticate } from '../middleware/authenticate';
+import { handleError } from '../utils/errors';
+import { CitizenQuery } from '../types/fastify';
 
 export default async function citizenRoutes(fastify: FastifyInstance) {
   fastify.post('/citizens', {
-    preValidation: [authenticate]
+    preValidation: [authenticate],
   }, async (request, reply) => {
     try {
       const data = createCitizenSchema.parse(request.body);
-      const user = (request.user as any);
+      const user = request.user;
 
-      // Check if citizen exists by phone
-      let citizen = await prisma.citizen.findUnique({
-        where: { phone: data.phone }
-      });
+      let citizen = await prisma.citizen.findUnique({ where: { phone: data.phone } });
 
       if (!citizen) {
-        // Create new citizen
         citizen = await prisma.citizen.create({
           data: {
             name: data.name,
@@ -27,39 +25,46 @@ export default async function citizenRoutes(fastify: FastifyInstance) {
             aadhaar: data.aadhaar ? encrypt(data.aadhaar) : undefined,
             address: data.address,
             districtId: data.districtId,
-            stateId: data.stateId
-          }
+            stateId: data.stateId,
+          },
         });
         await logAudit('CITIZEN_CREATED', { citizenId: citizen.id }, undefined, user.id);
       }
 
       return reply.send(citizen);
-    } catch (err: any) {
-      console.error('Citizen creation error:', err);
-      return reply.status(400).send({ error: 'Validation failed or duplicate phone', details: err.errors });
+    } catch (err) {
+      return handleError(err, reply);
     }
   });
 
   fastify.get('/citizens', {
-    preValidation: [authenticate]
+    preValidation: [authenticate],
   }, async (request, reply) => {
-    const { search } = request.query as any;
-    
-    let whereClause = {};
-    if (search) {
-      whereClause = {
-        OR: [
-          { name: { contains: search } },
-          { phone: { contains: search } }
-        ]
-      };
+    try {
+      const { search, page = '1', limit = '20' } = request.query as CitizenQuery;
+
+      const whereClause = search
+        ? { OR: [{ name: { contains: search } }, { phone: { contains: search } }] }
+        : {};
+
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const [citizens, total] = await Promise.all([
+        prisma.citizen.findMany({ where: whereClause, skip, take: Number(limit) }),
+        prisma.citizen.count({ where: whereClause }),
+      ]);
+
+      return reply.send({
+        data: citizens,
+        meta: {
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          totalPages: Math.ceil(total / Number(limit)),
+        },
+      });
+    } catch (err) {
+      return handleError(err, reply);
     }
-    
-    const citizens = await prisma.citizen.findMany({
-      where: whereClause,
-      take: 20
-    });
-    
-    return reply.send(citizens);
   });
 }

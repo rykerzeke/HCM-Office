@@ -4,11 +4,14 @@ import { z } from 'zod';
 import { encrypt } from '../utils/encryption';
 import { generateCaseId } from '../utils/caseId';
 import { logAudit } from '../services/audit';
+import { handleError } from '../utils/errors';
+import { StateQuery, TrackQuery } from '../types/fastify';
 
 const requestCategoryEnum = z.enum([
   'PUBLIC_GRIEVANCE', 'POLICY_REQUEST', 'PERSONAL_ISSUE', 'LAND_AND_REVENUE',
-  'CIVIC_ISSUE', 'PENSION_AND_WELFARE', 'OTHER'
+  'CIVIC_ISSUE', 'PENSION_AND_WELFARE', 'OTHER',
 ]);
+
 const publicBookingSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   phone: z.string().min(10).max(15),
@@ -23,89 +26,106 @@ const publicBookingSchema = z.object({
 });
 
 export default async function publicRoutes(fastify: FastifyInstance) {
-  // Public: Get states list
+  // Public: Get states list (used in booking form)
   fastify.get('/public/states', async (_request, reply) => {
-    const states = await prisma.state.findMany({ orderBy: { name: 'asc' } });
-    return reply.send(states);
+    try {
+      const states = await prisma.state.findMany({ orderBy: { name: 'asc' } });
+      return reply.send(states);
+    } catch (err) {
+      return handleError(err, reply);
+    }
   });
 
-  // Public: Get districts by state
+  // Public: Get districts by state (used in booking form)
   fastify.get('/public/districts', async (request, reply) => {
-    const { stateId } = request.query as any;
-    const where: any = {};
-    if (stateId) where.stateId = stateId;
-    const districts = await prisma.district.findMany({ where, orderBy: { name: 'asc' } });
-    return reply.send(districts);
+    try {
+      const { stateId } = request.query as StateQuery;
+      const where = stateId ? { stateId } : {};
+      const districts = await prisma.district.findMany({ where, orderBy: { name: 'asc' } });
+      return reply.send(districts);
+    } catch (err) {
+      return handleError(err, reply);
+    }
   });
 
-  // Public: Submit an appointment/booking
+  // Public: Submit an appointment/booking (with transaction + retry for caseId race condition)
   fastify.post('/public/book', async (request, reply) => {
     try {
       const data = publicBookingSchema.parse(request.body);
 
-      // Find or create citizen
-      let citizen = await prisma.citizen.findUnique({ where: { phone: data.phone } });
-      if (!citizen) {
-        citizen = await prisma.citizen.create({
-          data: {
-            name: data.name,
-            phone: data.phone,
-            aadhaar: data.aadhaar ? encrypt(data.aadhaar) : undefined,
-            address: data.address,
-            districtId: data.districtId || undefined,
-            stateId: data.stateId || undefined,
-          }
-        });
-      }
+      let newCase;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          newCase = await prisma.$transaction(async (tx) => {
+            let citizen = await tx.citizen.findUnique({ where: { phone: data.phone } });
+            if (!citizen) {
+              citizen = await tx.citizen.create({
+                data: {
+                  name: data.name,
+                  phone: data.phone,
+                  aadhaar: data.aadhaar ? encrypt(data.aadhaar) : undefined,
+                  address: data.address,
+                  districtId: data.districtId || undefined,
+                  stateId: data.stateId || undefined,
+                },
+              });
+            }
 
-      // Create a case
-      const caseIdString = await generateCaseId();
-      const newCase = await prisma.case.create({
-        data: {
-          caseId: caseIdString,
-          citizenId: citizen.id,
-          purpose: data.purpose,
-          meetingDate: data.preferredDate ? new Date(data.preferredDate) : null,
-          status: 'PENDING_APPROVAL',
-          priority: data.priority ?? 'MEDIUM',
-          category: data.category ?? undefined,
+            const caseIdString = await generateCaseId(tx);
+            const created = await tx.case.create({
+              data: {
+                caseId: caseIdString,
+                citizenId: citizen.id,
+                purpose: data.purpose,
+                meetingDate: data.preferredDate ? new Date(data.preferredDate) : null,
+                status: 'PENDING_APPROVAL',
+                priority: data.priority ?? 'MEDIUM',
+                category: data.category ?? undefined,
+              },
+            });
+
+            await logAudit('PUBLIC_BOOKING', { citizenId: citizen.id, phone: data.phone }, created.id, undefined, tx);
+            return created;
+          });
+          break;
+        } catch (txErr: unknown) {
+          const prismaErr = txErr as { code?: string };
+          if (prismaErr?.code === 'P2002' && attempt < 2) continue;
+          throw txErr;
         }
-      });
-
-      await logAudit('PUBLIC_BOOKING', { citizenId: citizen.id, phone: data.phone }, newCase.id);
+      }
 
       return reply.send({
         success: true,
-        caseId: newCase.caseId,
-        message: `Your appointment request has been registered with Case ID: ${newCase.caseId}. You can track your status using this ID.`
+        caseId: newCase!.caseId,
+        message: `Your appointment request has been registered with Case ID: ${newCase!.caseId}. You can track your status using this ID.`,
       });
-    } catch (err: any) {
-      return reply.status(400).send({
-        error: 'Validation failed',
-        details: err.errors || err.message
-      });
+    } catch (err) {
+      return handleError(err, reply);
     }
   });
 
   // Public: Track case status by caseId or phone
   fastify.get('/public/track', async (request, reply) => {
-    const { query } = request.query as any;
-    if (!query) return reply.status(400).send({ error: 'Please provide a Case ID or Phone Number' });
+    try {
+      const { query } = request.query as TrackQuery;
+      if (!query) return reply.status(400).send({ error: 'Please provide a Case ID or Phone Number', code: 'MISSING_QUERY' });
 
-    const cases = await prisma.case.findMany({
-      where: {
-        OR: [
-          { caseId: { contains: query } },
-          { citizen: { phone: { contains: query } } }
-        ]
-      },
-      include: {
-        citizen: { select: { name: true, phone: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
+      const cases = await prisma.case.findMany({
+        where: {
+          OR: [
+            { caseId: { contains: query } },
+            { citizen: { phone: { contains: query } } },
+          ],
+        },
+        include: { citizen: { select: { name: true, phone: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      });
 
-    return reply.send(cases);
+      return reply.send(cases);
+    } catch (err) {
+      return handleError(err, reply);
+    }
   });
 }
