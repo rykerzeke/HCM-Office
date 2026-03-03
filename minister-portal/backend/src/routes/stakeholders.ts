@@ -2,45 +2,50 @@ import { FastifyInstance } from 'fastify';
 import prisma from '../data/prisma';
 import { logAudit } from '../services/audit';
 import { authenticate } from '../middleware/authenticate';
+import { handleError } from '../utils/errors';
+import { CaseIdParam, CaseAndOfficialParam } from '../types/fastify';
 
 export default async function stakeholderRoutes(fastify: FastifyInstance) {
   fastify.post('/cases/:caseId/stakeholders', {
-    preValidation: [authenticate]
+    preValidation: [authenticate],
   }, async (request, reply) => {
     try {
-      const { caseId } = request.params as any;
-      const { officialId } = request.body as any;
-      const user = (request.user as any);
+      const { caseId } = request.params as CaseIdParam;
+      const { officialId } = request.body as { officialId: string };
+      const user = request.user;
 
-      const mapping = await prisma.stakeholderMapping.create({
-        data: { caseId, officialId },
-        include: { official: true }
+      const mapping = await prisma.$transaction(async (tx) => {
+        const created = await tx.stakeholderMapping.create({
+          data: { caseId, officialId },
+          include: { official: true },
+        });
+        await logAudit('STAKEHOLDER_MAPPED', { official: created.official.name }, caseId, user.id, tx);
+        return created;
       });
 
-      await logAudit('STAKEHOLDER_MAPPED', { official: mapping.official.name }, caseId, user.id);
-
       return reply.send(mapping);
-    } catch (err: any) {
-      return reply.status(400).send({ error: 'Failed to map stakeholder' });
+    } catch (err) {
+      return handleError(err, reply);
     }
   });
 
   fastify.delete('/cases/:caseId/stakeholders/:officialId', {
-    preValidation: [authenticate]
+    preValidation: [authenticate],
   }, async (request, reply) => {
     try {
-      const { caseId, officialId } = request.params as any;
-      const user = (request.user as any);
+      const { caseId, officialId } = request.params as CaseAndOfficialParam;
+      const user = request.user;
 
-      await prisma.stakeholderMapping.delete({
-        where: { caseId_officialId: { caseId, officialId } }
+      await prisma.$transaction(async (tx) => {
+        await tx.stakeholderMapping.delete({
+          where: { caseId_officialId: { caseId, officialId } },
+        });
+        await logAudit('STAKEHOLDER_UNMAPPED', { officialId }, caseId, user.id, tx);
       });
 
-      await logAudit('STAKEHOLDER_UNMAPPED', { officialId }, caseId, user.id);
-
       return reply.send({ success: true });
-    } catch (err: any) {
-      return reply.status(400).send({ error: 'Failed to unmap stakeholder' });
+    } catch (err) {
+      return handleError(err, reply);
     }
   });
 }
