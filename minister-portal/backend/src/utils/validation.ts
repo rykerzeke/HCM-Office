@@ -72,6 +72,19 @@ export const assignCaseSchema = z.object({
   status: assignmentStatusEnum.optional(),
 });
 
+export const updateAssignmentSchema = z.object({
+  dueDate: z.string().optional(),
+  status: assignmentStatusEnum.optional(),
+  notes: z.string().optional(),
+}).strict();
+
+// Allowed manual status overrides — excludes terminal/legacy statuses that should
+// only be set by the structured workflow endpoints (authorize, schedule, checkin, close)
+export const manualCaseStatusEnum = z.enum([
+  'PENDING_APPROVAL', 'APPROVED', 'ON_HOLD', 'SCHEDULED',
+  'NO_SHOW', 'RESCHEDULED', 'FOLLOW_UP_REQUIRED', 'RESCHEDULE_REQUIRED',
+]);
+
 export const communicationTypeEnum = z.enum(['CALL', 'LETTER', 'EMAIL', 'MEETING_NOTE']);
 
 export const createCommunicationLogSchema = z.object({

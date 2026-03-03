@@ -1,5 +1,9 @@
 import { FastifyInstance } from 'fastify';
+import { RequestCategory } from '@prisma/client';
 import prisma from '../data/prisma';
+import { authenticate } from '../middleware/authenticate';
+import { handleError } from '../utils/errors';
+import { StateQuery, OfficialsQuery, SuggestedOfficialsQuery } from '../types/fastify';
 
 // Minister Meeting Workflow: fixed referring officers
 const REFERRING_OFFICERS = [
@@ -15,6 +19,16 @@ const REFERENCE_MODES = [
   { id: 'IN_PERSON', name: 'In-person' },
 ];
 
+const REQUEST_CATEGORIES = [
+  { id: 'PUBLIC_GRIEVANCE', name: 'Public Grievance' },
+  { id: 'POLICY_REQUEST', name: 'Policy Request' },
+  { id: 'PERSONAL_ISSUE', name: 'Personal Issue' },
+  { id: 'LAND_AND_REVENUE', name: 'Land & Revenue' },
+  { id: 'CIVIC_ISSUE', name: 'Civic Issue' },
+  { id: 'PENSION_AND_WELFARE', name: 'Pension & Welfare' },
+  { id: 'OTHER', name: 'Other' },
+];
+
 export default async function referenceRoutes(fastify: FastifyInstance) {
   fastify.get('/referring-officers', async (_request, reply) => {
     return reply.send(REFERRING_OFFICERS);
@@ -24,76 +38,82 @@ export default async function referenceRoutes(fastify: FastifyInstance) {
     return reply.send(REFERENCE_MODES);
   });
 
-  const REQUEST_CATEGORIES = [
-    { id: 'PUBLIC_GRIEVANCE', name: 'Public Grievance' },
-    { id: 'POLICY_REQUEST', name: 'Policy Request' },
-    { id: 'PERSONAL_ISSUE', name: 'Personal Issue' },
-    { id: 'LAND_AND_REVENUE', name: 'Land & Revenue' },
-    { id: 'CIVIC_ISSUE', name: 'Civic Issue' },
-    { id: 'PENSION_AND_WELFARE', name: 'Pension & Welfare' },
-    { id: 'OTHER', name: 'Other' },
-  ];
   fastify.get('/request-categories', async (_request, reply) => {
     return reply.send(REQUEST_CATEGORIES);
   });
 
-  fastify.get('/states', async (request, reply) => {
-    const states = await prisma.state.findMany({ orderBy: { name: 'asc' } });
-    return reply.send(states);
+  fastify.get('/states', async (_request, reply) => {
+    try {
+      const states = await prisma.state.findMany({ orderBy: { name: 'asc' } });
+      return reply.send(states);
+    } catch (err) {
+      return handleError(err, reply);
+    }
   });
 
   fastify.get('/districts', async (request, reply) => {
-    const { stateId } = request.query as any;
-    let whereClause = {};
-    if (stateId) whereClause = { stateId };
-    
-    const districts = await prisma.district.findMany({
-      where: whereClause,
-      orderBy: { name: 'asc' }
-    });
-    return reply.send(districts);
-  });
-
-  fastify.get('/officials', async (request, reply) => {
-    const { stateId, districtId, search } = request.query as any;
-    
-    let whereClause: any = {};
-    if (stateId) whereClause.stateId = stateId;
-    if (districtId) whereClause.districtId = districtId;
-    if (search) {
-      whereClause.name = { contains: search };
+    try {
+      const { stateId } = request.query as StateQuery;
+      const where = stateId ? { stateId } : {};
+      const districts = await prisma.district.findMany({ where, orderBy: { name: 'asc' } });
+      return reply.send(districts);
+    } catch (err) {
+      return handleError(err, reply);
     }
-
-    const officials = await prisma.official.findMany({
-      where: whereClause,
-      include: { state: true, district: true },
-      orderBy: { name: 'asc' }
-    });
-    return reply.send(officials);
   });
 
-  // Suggested officials by request category (department keyword match)
-  fastify.get('/officials/suggested', async (request, reply) => {
-    const { category, stateId, districtId } = request.query as any;
-    if (!category) return reply.send([]);
-    const mapping = await prisma.categoryDepartment.findFirst({
-      where: { category }
-    });
-    if (!mapping) return reply.send([]);
-    const whereClause: any = {
-      OR: [
-        { department: { contains: mapping.departmentKeyword } },
-        { designation: { contains: mapping.departmentKeyword } },
-      ]
-    };
-    if (stateId) whereClause.stateId = stateId;
-    if (districtId) whereClause.districtId = districtId;
-    const officials = await prisma.official.findMany({
-      where: whereClause,
-      include: { state: true, district: true },
-      orderBy: { name: 'asc' },
-      take: 10
-    });
-    return reply.send(officials);
+  // Protected — officials list includes contact details (phone, email, address)
+  fastify.get('/officials', {
+    preValidation: [authenticate],
+  }, async (request, reply) => {
+    try {
+      const { stateId, districtId, search } = request.query as OfficialsQuery;
+
+      const whereClause: Record<string, unknown> = {};
+      if (stateId) whereClause.stateId = stateId;
+      if (districtId) whereClause.districtId = districtId;
+      if (search) whereClause.name = { contains: search };
+
+      const officials = await prisma.official.findMany({
+        where: whereClause,
+        include: { state: true, district: true },
+        orderBy: { name: 'asc' },
+      });
+      return reply.send(officials);
+    } catch (err) {
+      return handleError(err, reply);
+    }
+  });
+
+  // Protected — suggested officials by category
+  fastify.get('/officials/suggested', {
+    preValidation: [authenticate],
+  }, async (request, reply) => {
+    try {
+      const { category, stateId, districtId } = request.query as SuggestedOfficialsQuery;
+      if (!category) return reply.send([]);
+
+      const mapping = await prisma.categoryDepartment.findFirst({ where: { category: category as RequestCategory } });
+      if (!mapping) return reply.send([]);
+
+      const whereClause: Record<string, unknown> = {
+        OR: [
+          { department: { contains: mapping.departmentKeyword } },
+          { designation: { contains: mapping.departmentKeyword } },
+        ],
+      };
+      if (stateId) whereClause.stateId = stateId;
+      if (districtId) whereClause.districtId = districtId;
+
+      const officials = await prisma.official.findMany({
+        where: whereClause,
+        include: { state: true, district: true },
+        orderBy: { name: 'asc' },
+        take: 10,
+      });
+      return reply.send(officials);
+    } catch (err) {
+      return handleError(err, reply);
+    }
   });
 }
