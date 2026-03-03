@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -6,7 +7,7 @@ import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import path from 'node:path';
 import fastifyStatic from '@fastify/static';
-import dotenv from 'dotenv';
+
 
 import authRoutes from './routes/auth';
 import citizenRoutes from './routes/citizens';
@@ -23,7 +24,6 @@ import reportRoutes from './routes/reports';
 import publicRoutes from './routes/public';
 import prisma from './data/prisma';
 
-dotenv.config();
 
 if (!process.env.JWT_SECRET) {
   console.error('FATAL: JWT_SECRET environment variable is required');
@@ -100,6 +100,9 @@ for (const prefix of [V1, V0]) {
   server.register(publicRoutes, { prefix });
 }
 
+// Root endpoint
+server.get('/', async () => ({ status: 'OK', service: 'HCM Minister Portal API', version: '1.0' }));
+
 // Health check (not versioned)
 server.get('/health', async () => ({ status: 'OK' }));
 
@@ -114,7 +117,7 @@ const shutdown = async (signal: string) => {
 };
 
 process.on('SIGTERM', () => { shutdown('SIGTERM').catch(console.error); });
-process.on('SIGINT',  () => { shutdown('SIGINT').catch(console.error); });
+process.on('SIGINT', () => { shutdown('SIGINT').catch(console.error); });
 
 // ---------------------------------------------------------------------------
 // Start
