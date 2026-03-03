@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Activity, Clock, Users, CheckCircle, TrendingUp, ArrowUpRight, Calendar, AlertCircle, Zap } from 'lucide-react';
+import { Activity, Clock, Users, CheckCircle, ArrowUpRight, Calendar, AlertCircle, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const DashboardPage = () => {
@@ -84,25 +84,26 @@ export const DashboardPage = () => {
         {statCards.map((card, i) => {
           const Icon = card.icon;
           const linkHref = card.label === 'Follow-up Required' && card.value > 0 ? '/cases?status=FOLLOW_UP_REQUIRED' : undefined;
-          const Wrapper = linkHref ? Link : 'div';
-          const wrapperProps = linkHref ? { to: linkHref, className: 'block' } : {};
-          return (
-            <Wrapper key={i} {...wrapperProps}>
-              <div
-                className={`glass rounded-2xl p-6 ${card.borderColor} hover:scale-[1.02] transition-transform duration-200 ${linkHref ? 'cursor-pointer' : ''}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
-                    <Icon className={`h-5 w-5 icon-3d ${card.iconColor}`} />
-                  </div>
-                  <ArrowUpRight className="h-4 w-4 text-surface-600" />
+          const cardContent = (
+            <div
+              className={`glass rounded-2xl p-6 ${card.borderColor} hover:scale-[1.02] transition-transform duration-200 ${linkHref ? 'cursor-pointer' : ''}`}
+            >
+              <div className="flex items-start justify-between">
+                <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
+                  <Icon className={`h-5 w-5 icon-3d ${card.iconColor}`} />
                 </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-bold text-white">{card.value}</p>
-                  <p className="text-sm text-surface-400 mt-1 font-medium">{card.label}</p>
-                </div>
+                <ArrowUpRight className="h-4 w-4 text-surface-600" />
               </div>
-            </Wrapper>
+              <div className="mt-4">
+                <p className="text-3xl font-bold text-white">{card.value}</p>
+                <p className="text-sm text-surface-400 mt-1 font-medium">{card.label}</p>
+              </div>
+            </div>
+          );
+          return linkHref ? (
+            <Link key={i} to={linkHref} className="block">{cardContent}</Link>
+          ) : (
+            <div key={i}>{cardContent}</div>
           );
         })}
       </div>
