@@ -49,7 +49,10 @@ export default async function publicRoutes(fastify: FastifyInstance) {
   });
 
   // Public: Submit an appointment/booking (with transaction + retry for caseId race condition)
-  fastify.post('/public/book', async (request, reply) => {
+  // Rate limited to 5 submissions per hour per IP to prevent bot flooding
+  fastify.post('/public/book', {
+    config: { rateLimit: { max: 5, timeWindow: '1 hour' } },
+  }, async (request, reply) => {
     try {
       const data = publicBookingSchema.parse(request.body);
 
@@ -105,25 +108,46 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Public: Track case status by caseId or phone
-  fastify.get('/public/track', async (request, reply) => {
+  // Public: Track case status by exact caseId only.
+  // Phone-based search is intentionally NOT supported here to prevent
+  // unauthenticated enumeration of all cases belonging to a phone number.
+  fastify.get('/public/track', {
+    config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     try {
       const { query } = request.query as TrackQuery;
-      if (!query) return reply.status(400).send({ error: 'Please provide a Case ID or Phone Number', code: 'MISSING_QUERY' });
+      if (!query) return reply.status(400).send({ error: 'Please provide a Case ID', code: 'MISSING_QUERY' });
 
-      const cases = await prisma.case.findMany({
-        where: {
-          OR: [
-            { caseId: { contains: query } },
-            { citizen: { phone: { contains: query } } },
-          ],
+      // Guard: reject queries that are too long or don't look like a case ID
+      const trimmed = query.trim();
+      if (trimmed.length > 30) {
+        return reply.status(400).send({ error: 'Invalid Case ID format', code: 'INVALID_QUERY' });
+      }
+
+      const found = await prisma.case.findFirst({
+        where: { caseId: trimmed },
+        // Only return citizen-safe fields — never expose internal IDs, notes, or staff data
+        select: {
+          caseId: true,
+          status: true,
+          purpose: true,
+          category: true,
+          priority: true,
+          createdAt: true,
+          scheduledDate: true,
+          scheduledTimeSlot: true,
+          meetingType: true,
+          venueOrLink: true,
+          closureStatus: true,
+          citizen: { select: { name: true } },
         },
-        include: { citizen: { select: { name: true, phone: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
       });
 
-      return reply.send(cases);
+      if (!found) {
+        return reply.status(404).send({ error: 'Case not found', code: 'NOT_FOUND' });
+      }
+
+      return reply.send(found);
     } catch (err) {
       return handleError(err, reply);
     }

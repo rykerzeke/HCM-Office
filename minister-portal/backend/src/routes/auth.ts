@@ -24,7 +24,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
         return reply.status(401).send({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
       }
 
-      const token = fastify.jwt.sign({ id: user.id, role: user.role, name: user.name });
+      // Token expires after 8 hours (one full workday); clients must re-login after expiry
+      const token = fastify.jwt.sign({ id: user.id, role: user.role, name: user.name }, { expiresIn: '8h' });
       await logAudit('USER_LOGIN', { email }, undefined, user.id);
 
       return reply.send({ token, user: { id: user.id, name: user.name, role: user.role } });
