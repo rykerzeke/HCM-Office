@@ -26,7 +26,8 @@ function safeFilename(originalName: string): string {
 
 // Use the same resolution logic as src/index.ts so uploads are written to the
 // exact directory that Fastify exposes via fastify-static.
-const UPLOAD_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
+import uploadsDir from '../utils/uploadsDir';
+const UPLOAD_DIR = uploadsDir;
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });

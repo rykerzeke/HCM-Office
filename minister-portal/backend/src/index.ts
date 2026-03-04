@@ -5,8 +5,8 @@ import helmet from '@fastify/helmet';
 import fastifyJwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
-import path from 'node:path';
 import fastifyStatic from '@fastify/static';
+import uploadsDir from './utils/uploadsDir';
 
 
 import authRoutes from './routes/auth';
@@ -71,8 +71,7 @@ server.register(multipart, {
   },
 });
 
-// Static file serving for uploaded documents
-const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
+// Static file serving for uploaded documents — shares resolution logic with file upload route
 server.register(fastifyStatic, {
   root: uploadsDir,
   prefix: '/uploads/',
