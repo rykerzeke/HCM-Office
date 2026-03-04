@@ -1,7 +1,17 @@
+import 'dotenv/config';
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8']);
 import { PrismaClient, RequestCategory } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+// Use DIRECT_URL (port 5432) — bypasses PgBouncer which blocks ts-node connections
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DIRECT_URL || process.env.DATABASE_URL,
+    },
+  },
+});
 
 async function main() {
   // Clear existing
@@ -23,7 +33,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: { name: 'Admin User', email: 'admin@portal.gov', password, role: 'ADMIN' }
   });
-  
+
   const staff = await prisma.user.create({
     data: { name: 'Staff User', email: 'staff@portal.gov', password, role: 'STAFF' }
   });
@@ -38,7 +48,7 @@ async function main() {
     'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
   ];
   const stateRecords = [];
-  
+
   for (const s of states) {
     stateRecords.push(await prisma.state.create({ data: { name: s } }));
   }

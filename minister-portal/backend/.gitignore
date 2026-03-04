@@ -1,5 +1,6 @@
 node_modules
 dist/
+
 # Keep environment variables out of version control
 .env
 
@@ -10,3 +11,12 @@ dist/
 
 # Uploaded files (stored locally)
 uploads/
+
+# Local development/test helpers (not part of deployed app)
+find_region.js
+pg_test.js
+prisma_test.ts
+seed_user.js
+
+# Error and debug logs
+*.log

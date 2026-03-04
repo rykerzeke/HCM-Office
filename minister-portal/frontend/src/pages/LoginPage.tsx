@@ -22,6 +22,7 @@ export const LoginPage = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
@@ -31,8 +32,13 @@ export const LoginPage = () => {
       const res = await api.post('/login', data);
       login(res.data.token, res.data.user);
       navigate('/');
-    } catch {
-      setError('Invalid credentials. Please try again.');
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401) {
+        setError('Invalid credentials. Please try again.');
+      } else {
+        setError('Unable to reach server. Please try again later or contact support.');
+      }
     }
   };
 
@@ -82,6 +88,17 @@ export const LoginPage = () => {
               />
               {errors.password && <p className="text-rose-400 text-xs mt-1">{errors.password.message}</p>}
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setValue('email', 'admin@portal.gov');
+                setValue('password', 'admin123');
+              }}
+              className="w-full text-xs text-primary-300 hover:text-primary-100 underline-offset-2 hover:underline text-right"
+            >
+              Fill demo admin credentials
+            </button>
 
             <button
               type="submit"

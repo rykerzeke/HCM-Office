@@ -24,7 +24,9 @@ function safeFilename(originalName: string): string {
   return `${crypto.randomUUID()}${safeExt}`;
 }
 
-const UPLOAD_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
+// Use the same resolution logic as src/index.ts so uploads are written to the
+// exact directory that Fastify exposes via fastify-static.
+const UPLOAD_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });

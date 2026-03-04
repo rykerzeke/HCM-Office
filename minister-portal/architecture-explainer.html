@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Explainer: Minister Portal</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Fira+Code:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            /* Slate 900 */
+            --surface: #1e293b;
+            /* Slate 800 */
+            --surface-elevated: #334155;
+            /* Slate 700 */
+            --border: rgba(255, 255, 255, 0.1);
+            --border-highlight: rgba(96, 165, 250, 0.4);
+            --text: #f8fafc;
+            /* Slate 50 */
+            --text-dim: #94a3b8;
+            /* Slate 400 */
+
+            --font-body: 'DM Sans', system-ui, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+
+            /* Blueprint Accents */
+            --accent-primary: #38bdf8;
+            /* Light Blue */
+            --accent-primary-dim: rgba(56, 189, 248, 0.1);
+            --accent-secondary: #818cf8;
+            /* Indigo */
+            --accent-secondary-dim: rgba(129, 140, 248, 0.1);
+            --status-ok: #34d399;
+            /* Emerald */
+            --status-warn: #fbbf24;
+            /* Amber */
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f8fafc;
+                /* Slate 50 */
+                --surface: #ffffff;
+                --surface-elevated: #f1f5f9;
+                /* Slate 100 */
+                --border: rgba(15, 23, 42, 0.1);
+                --border-highlight: rgba(56, 189, 248, 0.5);
+                --text: #0f172a;
+                /* Slate 900 */
+                --text-dim: #64748b;
+                /* Slate 500 */
+                --accent-primary-dim: rgba(56, 189, 248, 0.15);
+                --accent-secondary-dim: rgba(129, 140, 248, 0.15);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text);
+            background-color: var(--bg);
+            /* Blueprint grid background */
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-attachment: fixed;
+            line-height: 1.6;
+            padding: 3rem 2rem;
+            min-height: 100vh;
+        }
+
+        header {
+            max-width: 1000px;
+            margin: 0 auto 4rem auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-family: var(--font-mono);
+            color: var(--accent-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-label::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+        }
+
+        .section-label::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background-color: var(--border);
+        }
+
+        .ve-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            /* Blueprint precise corners */
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .ve-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+        }
+
+        .ve-card--hero {
+            background-color: var(--accent-primary-dim);
+            border: 1px solid var(--accent-primary);
+        }
+
+        .mermaid-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 2rem 0;
+            background: var(--surface-elevated);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            /* Added to handle wide charts on smaller screens */
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h3 {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-secondary);
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: var(--accent-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--surface-elevated);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background: var(--surface-elevated);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="subtitle">SYS.01 // Architecture Explainer</div>
+        <h1>Minister's Request Portal</h1>
+        <p style="color: var(--text-dim); max-width: 600px; margin: 1rem auto;">A comprehensive civic response system
+            built to manage and track citizen grievances, policy requests, and meetings for the central administration.
+        </p>
+    </header>
+
+    <div class="container">
+
+        <div class="section-label">OVERVIEW: CORE TECHNOLOGIES</div>
+        <div class="ve-card ve-card--hero grid-2">
+            <div>
+                <h3>Frontend Layer</h3>
+                <p>A reactive citizen & admin portal.</p>
+                <ul class="tag-list">
+                    <li class="tag">Vite</li>
+                    <li class="tag">React</li>
+                    <li class="tag">TypeScript</li>
+                    <li class="tag">Tailwind CSS</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Backend API</h3>
+                <p>High-performance, secure transaction processing.</p>
+                <ul class="tag-list">
+                    <li class="tag">Node.js</li>
+                    <li class="tag">Fastify</li>
+                    <li class="tag">Prisma ORM</li>
+                    <li class="tag">Supabase PostgreSQL</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section-label">TOPOLOGY: DATA FLOW</div>
+        <div class="mermaid-wrap">
+            <div class="mermaid">
+                flowchart TD
+                Citizen[Citizen Portal] -->|Submits Request| API(Fastify API Gateway)
+                Admin[Admin Dashboard] -->|Reviews & Schedules| API
+
+                subgraph Backend Environment
+                API --> Auth[JWT Authentication]
+                Auth --> Router[Route Handlers]
+                Router --> Services[Business Logic]
+                Router --> Storage[File Uploads / Local Disk]
+                Services --> ORM[(Prisma Client)]
+                end
+
+                ORM -->|Port 6543 / Connection Pooling| Supabase[(Supabase PostgreSQL)]
+
+                classDef default fill:transparent,stroke:#94a3b8,stroke-width:1px,color:#f8fafc,font-family:Fira Code;
+                classDef highlight fill:rgba(56,189,248,0.15),stroke:#38bdf8,color:#f8fafc;
+                classDef db fill:rgba(129,140,248,0.15),stroke:#818cf8,color:#f8fafc;
+
+                class API,Router,Services highlight;
+                class Supabase,ORM db;
+            </div>
+        </div>
+
+        <div class="section-label">BACKEND MODULES (HYBRID DETAIL)</div>
+        <div class="grid-2">
+            <div class="ve-card">
+                <h3>src/routes/cases.ts</h3>
+                <p>The lifecycle engine for citizen requests. Handles state transitions.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Status Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Submit Request</td>
+                            <td><code>PENDING_APPROVAL</code></td>
+                        </tr>
+                        <tr>
+                            <td>Office Review</td>
+                            <td><code>APPROVED / ON_HOLD / REJECTED</code></td>
+                        </tr>
+                        <tr>
+                            <td>Assign Date</td>
+                            <td><code>SCHEDULED</code></td>
+                        </tr>
+                        <tr>
+                            <td>Post-Meeting</td>
+                            <td><code>COMPLETED / FOLLOW_UP_REQUIRED</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ve-card">
+                <h3>src/routes/assignments.ts</h3>
+                <p>Task delegation system. Links cases to specific staff members.</p>
+                <ul class="tag-list">
+                    <li class="tag">Creates Tasks</li>
+                    <li class="tag">Tracks Due Dates</li>
+                    <li class="tag">AssignmentStatus (PENDING -> RESOLVED)</li>
+                </ul>
+            </div>
+
+            <div class="ve-card">
+                <h3>src/data/prisma.ts</h3>
+                <p>The database connection manager. Utilizes <code>DATABASE_URL</code> for the connection string via
+                    PgBouncer (Port 6543).</p>
+                <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 1rem;">Note: <code>DIRECT_URL</code>
+                    (Port 5432) is isolated solely for Prisma Migrations.</p>
+            </div>
+
+            <div class="ve-card">
+                <h3>src/middleware/</h3>
+                <p>Security and Request Validation layer.</p>
+                <ul class="tag-list">
+                    <li class="tag">authenticate (JWT Verification)</li>
+                    <li class="tag">authorize (RBAC / requireAdmin)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section-label">SCHEMA: CORE ENTITIES</div>
+        <div class="mermaid-wrap">
+            <div class="mermaid">
+                erDiagram
+                Citizen ||--o{ Case : "submits"
+                Citizen {
+                string id PK
+                string phone "Unique"
+                string aadhaar "Encrypted"
+                }
+
+                Case ||--o{ Assignment : "delegated to"
+                Case ||--o{ CommunicationLog : "has records"
+                Case {
+                string caseId "Sequential MO-2026-..."
+                string status "CaseStatus Enum"
+                string priority
+                string category
+                boolean resolvedWithoutMeeting
+                }
+
+                User ||--o{ Assignment : "handles"
+                User {
+                string id PK
+                string email UK
+                string role "ADMIN | STAFF | OFFICIAL"
+                }
+
+                Official ||--o{ StakeholderMapping : "is tagged in"
+                Case ||--o{ StakeholderMapping : "includes"
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.esm.min.mjs';
+
+        // Initialize immediately to ensure custom theme applies before auto-render
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                background: 'transparent',
+                primaryColor: isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(56, 189, 248, 0.15)',
+                primaryTextColor: isDark ? '#f8fafc' : '#0f172a',
+                primaryBorderColor: isDark ? '#38bdf8' : '#0284c7',
+                lineColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 23, 42, 0.2)',
+                textColor: isDark ? '#f8fafc' : '#0f172a',
+                fontFamily: 'Fira Code',
+                fontSize: '14px'
+            }
+        });
+    </script>
+</body>
+
+</html>
