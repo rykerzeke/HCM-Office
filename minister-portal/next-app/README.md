@@ -58,6 +58,15 @@ Make sure the Fastify backend is also running (`cd ../backend && npm run dev`).
 | `/cases/[id]` | Case detail with triage/assignment action panels |
 | `/examples` | Drizzle CRUD playground (direct DB, no Fastify) |
 
+## Deployment
+
+See [minister-portal/DEPLOYMENT.md](../DEPLOYMENT.md#nextjs-bff-next-app) for:
+
+- Pre-deploy checklist (backend live, Supabase, run Drizzle migrations once)
+- Production env vars: `BACKEND_API_URL`, `DATABASE_URL`
+- **Vercel** (recommended), **Docker**, or **Render** steps
+- Setting backend `CORS_ORIGIN` to the BFF URL
+
 ## Helpful links
 
 - [Supabase Docs](https://supabase.com)

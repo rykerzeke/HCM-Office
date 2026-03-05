@@ -21,7 +21,7 @@ Edit `.env` and set:
 |----------|-------------|
 | `JWT_SECRET` | Long random string (e.g. `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`) |
 | `ENCRYPTION_KEY` | 64 hex chars (e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) |
-| `DATABASE_URL` | Supabase: `postgresql://postgres:YOUR-DB-PASSWORD@db.vqlxlfbqpdujkxugbjdf.supabase.co:5432/postgres?sslmode=require` |
+| `DATABASE_URL` | Supabase: `postgresql://postgres:YOUR-DB-PASSWORD@db.[ref].supabase.co:5432/postgres?sslmode=require` |
 | `DIRECT_URL` | Same as `DATABASE_URL` (required by Prisma for migrations/seed) |
 | `CORS_ORIGIN` | `http://localhost:5173` |
 
@@ -51,7 +51,7 @@ VITE_API_URL=http://localhost:4000/api
 Optional (only if you add Supabase client features later):
 
 ```env
-VITE_SUPABASE_URL=https://vqlxlfbqpdujkxugbjdf.supabase.co
+VITE_SUPABASE_URL=https://[ref].supabase.co
 VITE_SUPABASE_ANON_KEY=your-publishable-key
 ```
 
@@ -121,3 +121,79 @@ In **Render** → your backend service → Environment → set `CORS_ORIGIN` to 
 | Set CORS | Render dashboard | Set `CORS_ORIGIN` to your Vercel URL |
 
 All secrets (passwords, keys, `DATABASE_URL`) stay in `.env` or in the hosting dashboards — **never commit them**.
+
+---
+
+## Next.js BFF (next-app)
+
+The BFF at `minister-portal/next-app` can be deployed **after** the Fastify backend is deployed. The BFF calls the backend API and uses Supabase only for Drizzle-owned tables (e.g. `example`).
+
+### Pre-deploy checklist
+
+1. **Backend is live** — You have a production Fastify URL (e.g. `https://minister-portal-backend.onrender.com/api`).
+2. **Supabase** — You have a Postgres connection string (use the **pooled** URL for serverless: port `6543`, `?pgbouncer=true`).
+3. **Drizzle migrations** — Run once (locally or in CI) so the `example` table exists:
+   ```bash
+   cd minister-portal/next-app
+   npm install
+   cp .env.local.example .env.local   # set DATABASE_URL and BACKEND_API_URL
+   npm run db:generate
+   npm run db:migrate
+   ```
+
+### Environment variables (production)
+
+| Variable | Value |
+|----------|--------|
+| `BACKEND_API_URL` | Production Fastify API base URL, e.g. `https://minister-portal-backend.onrender.com/api` |
+| `DATABASE_URL` | Supabase pooled connection string, e.g. `postgresql://postgres:PASSWORD@db.xxx.supabase.co:6543/postgres?pgbouncer=true` |
+
+### Option A: Vercel (recommended for Next.js)
+
+1. **Vercel** → New Project → import this repo.
+2. **Root Directory:** `minister-portal/next-app`.
+3. **Framework:** Next.js (auto-detected). Build: `npm run build`. No overrides needed.
+4. **Environment variables:** Add `BACKEND_API_URL` and `DATABASE_URL` in the Vercel dashboard (Production).
+5. **Migrations:** Run `npm run db:migrate` once (e.g. from your machine with production `DATABASE_URL`, or add a one-off build step). Vercel does not run migrations automatically.
+6. Deploy. Note the BFF URL (e.g. `https://minister-portal-bff.vercel.app`).
+7. **CORS:** In Render → backend service → set `CORS_ORIGIN` to this BFF URL (or include it if you have multiple origins). Redeploy backend if needed.
+
+### Option B: Docker (self-hosted or any cloud)
+
+1. In `minister-portal/next-app/`, add a `Dockerfile` (see example below).
+2. Build: `docker build -t minister-portal-bff .`
+3. Run migrations once against production DB, then start:  
+   `docker run -p 3000:3000 -e BACKEND_API_URL=... -e DATABASE_URL=... minister-portal-bff`
+
+Example `Dockerfile`:
+
+```dockerfile
+FROM node:20-alpine AS base
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+RUN npm run build
+
+FROM base AS run
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["npm", "run", "start"]
+```
+
+### Option C: Render (Node Web Service)
+
+1. **Render** → New → Web Service → connect repo.
+2. **Root Directory:** `minister-portal/next-app`.
+3. **Build:** `npm install && npm run build`
+4. **Start:** `npm run start`
+5. Set `BACKEND_API_URL` and `DATABASE_URL` in Environment. Run `npm run db:migrate` once (e.g. via Shell).
+
+### Summary: next-app deployment
+
+| Task | Action |
+|------|--------|
+| Run Drizzle migrations | Once, with production `DATABASE_URL` (locally or in Shell/CI) |
+| Set env vars | `BACKEND_API_URL`, `DATABASE_URL` in the host (Vercel/Render/Docker) |
+| Set backend CORS | Add the BFF origin to Fastify `CORS_ORIGIN` when the BFF is the main UI |
+| Deploy | Use Vercel (recommended), Docker, or Render as above |
